@@ -12,6 +12,13 @@ interface ProfilerContext extends ProfilerFactory
     public function isRunning(): bool;
 
     /**
+     * Get all currently registered profilers.
+     *
+     * @return Profiler[]
+     */
+    public function getAllProfilers(): iterable;
+
+    /**
      * Stop all profilers, remove all, then return them.
      *
      * It frees all consumed memory so far, it can be called only once.

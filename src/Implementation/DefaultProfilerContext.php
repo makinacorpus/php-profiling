@@ -31,6 +31,14 @@ final class DefaultProfilerContext implements ProfilerContext
     /**
      * {@inheritdoc}
      */
+    public function getAllProfilers(): iterable
+    {
+        return $this->profilers;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function flush(): iterable
     {
         $ret = $this->profilers;

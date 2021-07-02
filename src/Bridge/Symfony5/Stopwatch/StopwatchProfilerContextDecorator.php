@@ -12,7 +12,6 @@ final class StopwatchProfilerContextDecorator implements ProfilerContext
 {
     private ProfilerContext $decorated;
     private Stopwatch $stopwatch;
-    private array $profilers = [];
 
     public function __construct(Stopwatch $stopwatch, ProfilerContext $decorated)
     {
@@ -34,6 +33,15 @@ final class StopwatchProfilerContextDecorator implements ProfilerContext
     public function isRunning(): bool
     {
         return $this->decorated->isRunning();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getAllProfilers(): iterable
+    {
+        // @todo Does not return the decorated instances.
+        return $this->decorated->getAllProfilers();
     }
 
     /**
