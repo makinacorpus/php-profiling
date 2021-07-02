@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling\Bridge\Symfony5\DependencyInjection;
 
 use MakinaCorpus\Profiling\ProfilerContext;
+use MakinaCorpus\Profiling\Bridge\Sentry4\Tracing\TracingProfilerContextDecorator;
 use MakinaCorpus\Profiling\Bridge\Symfony5\Stopwatch\StopwatchProfilerContextDecorator;
 use MakinaCorpus\Profiling\Implementation\DefaultProfilerContext;
+use Sentry\State\HubInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
@@ -28,12 +30,21 @@ final class ProfilingExtension extends Extension
         $container->setAlias(ProfilerContext::class, DefaultProfilerContext::class);
 
         if (true /* @todo Stopwatch enabled (do this in a compiler pass) */) {
-            $decoratedInnerId = DefaultProfilerContext::class . '.inner';
+            $decoratedInnerId = StopwatchProfilerContextDecorator::class . '.inner';
             $decoratorDef = new Definition();
             $decoratorDef->setClass(StopwatchProfilerContextDecorator::class);
             $decoratorDef->setDecoratedService(DefaultProfilerContext::class, $decoratedInnerId, 800);
             $decoratorDef->setArguments([new Reference('debug.stopwatch'), new Reference($decoratedInnerId)]);
             $container->setDefinition(StopwatchProfilerContextDecorator::class, $decoratorDef);
+        }
+
+        if (false  /* && \class_exists(HubInterface::class) */ /* @todo Sentry\SentryBundle\SentryBundle in bundles */) {
+            $decoratedInnerId = TracingProfilerContextDecorator::class . '.inner';
+            $decoratorDef = new Definition();
+            $decoratorDef->setClass(TracingProfilerContextDecorator::class);
+            $decoratorDef->setDecoratedService(DefaultProfilerContext::class, $decoratedInnerId, 800);
+            $decoratorDef->setArguments([new Reference(HubInterface::class), new Reference($decoratedInnerId)]);
+            $container->setDefinition(TracingProfilerContextDecorator::class, $decoratorDef);
         }
     }
 
