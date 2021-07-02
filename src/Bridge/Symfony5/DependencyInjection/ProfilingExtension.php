@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MakinaCorpus\Profiling\Bridge\Symfony5\DependencyInjection;
+
+use MakinaCorpus\Profiling\ProfilerContext;
+use MakinaCorpus\Profiling\Bridge\Symfony5\Stopwatch\StopwatchProfilerContextDecorator;
+use MakinaCorpus\Profiling\Implementation\DefaultProfilerContext;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+
+final class ProfilingExtension extends Extension
+{
+    /**
+     * {@inheritdoc}
+     */
+    public function load(array $configs, ContainerBuilder $container)
+    {
+        $configuration = $this->getConfiguration($configs, $container);
+        /* $config = */ $this->processConfiguration($configuration, $configs);
+
+        $profilerContext = new Definition();
+        $profilerContext->setClass(DefaultProfilerContext::class);
+        $container->setDefinition(DefaultProfilerContext::class, $profilerContext);
+        $container->setAlias(ProfilerContext::class, DefaultProfilerContext::class);
+
+        if (true /* @todo Stopwatch enabled (do this in a compiler pass) */) {
+            $decoratedInnerId = DefaultProfilerContext::class . '.inner';
+            $decoratorDef = new Definition();
+            $decoratorDef->setClass(StopwatchProfilerContextDecorator::class);
+            $decoratorDef->setDecoratedService(DefaultProfilerContext::class, $decoratedInnerId, 800);
+            $decoratorDef->setArguments([new Reference('debug.stopwatch'), new Reference($decoratedInnerId)]);
+            $container->setDefinition(StopwatchProfilerContextDecorator::class, $decoratorDef);
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getConfiguration(array $config, ContainerBuilder $container)
+    {
+        return new ProfilingConfiguration();
+    }
+}
