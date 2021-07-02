@@ -56,7 +56,7 @@ echo $profiler21->isRunning(); // true
 echo $profiler22->isRunning(); // false
 
 // When you close a profiler, all the children will be stopped as well.
-$profiler2 = $profiler->start();
+$profiler2 = $profiler->stop();
 
 echo $profiler2->isRunning(); // false
 echo $profiler21->isRunning(); // false
