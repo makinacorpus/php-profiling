@@ -1,12 +1,16 @@
 {
     "name": "makinacorpus/profiling",
-    "description": "Profiling toolbox.",
+    "description": "Lightweight and flexible profiling toolbox, using the high resolution timer.",
     "type": "library",
     "license": "GPL-2.0-or-later",
     "authors": [
         {
             "name": "Makina Corpus",
             "homepage": "https://makina-corpus.com/"
+        },
+        {
+            "name": "Pierre RINEAU",
+            "email" : "pierre.rineau@makina-corpus.com"
         }
     ],
     "minimum-stability": "stable",
