@@ -70,7 +70,7 @@ echo $profiler22->getElapsedTime(); // 0.98897574
 
 // You can fully reset the global state, which will also free the
 // memory it took.
-// This is previous for long running deamons, such as message bus
+// This is precious for long running deamons, such as message bus
 // consumers which will remain alive for hours.
 $context->flush();
 ```
@@ -105,7 +105,7 @@ will be registered into the container, you can inject it into your object.
 Nevertheless, the recommended way for registering the context onto a service
 is the following:
 
-```
+```php
 namespace MyVendor\MyApp\SomeNamespace;
 
 use MakinaCorpus\Profiling\Implementation\ProfilerContextAware;
@@ -134,7 +134,7 @@ you allow your code to be resilient in case of misinitialisation:
 
 You then can use the profiler using the injected context:
 
-```
+```php
 namespace MyVendor\MyApp\SomeNamespace;
 
 use MakinaCorpus\Profiling\Implementation\ProfilerContextAware;
