@@ -57,4 +57,21 @@ interface Profiler extends ProfilerFactory
      * @return Profiler[]
      */
     public function getChildren(): iterable;
+
+    /**
+     * Set arbitrary attribute.
+     *
+     * @param mixed $value
+     *   Any value. You are discouraged from using attributes too much as it
+     *   will grow the memory consumption.
+     */
+    public function setAttribute(string $name, $value): void;
+
+    /**
+     * Get all attributes.
+     *
+     * @return array<string, mixed>
+     *   Keys are attribute names, values are arbitrary values.
+     */
+    public function getAttributes(): array;
 }

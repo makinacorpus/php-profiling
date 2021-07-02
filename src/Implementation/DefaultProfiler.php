@@ -19,6 +19,8 @@ final class DefaultProfiler implements Profiler
     private ?Profiler $parent = null;
     /** @var Profiler[] */
     private array $children = [];
+    /** @var array<string, mixed> */
+    private array $attributes = [];
 
     public function __construct(?string $name = null, ?Profiler $parent = null)
     {
@@ -152,5 +154,21 @@ final class DefaultProfiler implements Profiler
     public function getChildren(): iterable
     {
         return $this->children;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setAttribute(string $name, $value): void
+    {
+        $this->attributes[$name] = $value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getAttributes(): array
+    {
+        return $this->attributes;
     }
 }
