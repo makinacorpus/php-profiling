@@ -141,7 +141,7 @@ use MakinaCorpus\Profiling\Implementation\ProfilerContextAware;
 use MakinaCorpus\Profiling\Implementation\ProfilerContextAwareTrait;
 
 /**
- * Implementing the interface allow autoconfiguration.
+ * Implementing the interface allows autoconfiguration.
  */
 class SomeService implements ProfilerContextAware
 {
@@ -159,16 +159,21 @@ class SomeService implements ProfilerContextAware
             $this->doSomethingElse();
             $profiler->stop('something-else');
 
-            $profiler->start('something-else');
+            $profiler->start('something-other');
             $this->doSomethingElse();
-            $profiler->stop('something-else');
+            $profiler->stop('something-other');
 
+            $profiler->start('something-that-fails');
             throw new \Exception("Oups, something bad happened.");
+            $profiler->stop('something-that-fails');
 
         } finally {
             // We do heavily recommend that use the try/finally
             // pattern to ensure that exceptions will not betry
             // your profilers.
+            // The last stop() call within the try block will never
+            // be called, by stopping the parent profiler here, it
+            // stops the child as well.
             $profiler->stop();
         }
     }
@@ -188,6 +193,5 @@ additional cost.
 # To-do list
 
 - add memory profiling in `Profiler`,
-- transparent `symfony/stopwatch` bridge for exploiting results in Symfony profiler,
 - transparent `sentry/sentry` bridge for sending results in Sentry.
 
