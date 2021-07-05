@@ -24,7 +24,7 @@ trait ProfilerContextAwareTrait /* implements ProfilerContextAware */
      */
     protected function getContextProfiler(): ProfilerContext
     {
-        return $this->profilerContext ?? ($this->profilerContext = new DefaultProfilerContext());
+        return $this->profilerContext ?? ($this->profilerContext = new NullProfilerContext());
     }
 
     /**

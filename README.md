@@ -182,16 +182,57 @@ class SomeService implements ProfilerContextAware
 
 And that's it, have fun !
 
-## Stopwatch component
+## Integration
+
+### Stopwatch component
 
 If you are working on a debug enabled environment, this component will plug
-itself onto the Symfony stopwatch component transparently.
+itself onto the Symfony stopwatch component transparently. This means that all
+of your timers will appear in the profiler toolbar a no additional cost.
 
-This means that all of your timers will appear in the profiler toolbar a no
-additional cost.
+This is enabled per default in case the `@debug.stopwatch` service is found in
+the container when cache are cleared.
+
+If you wish to disable it, create the `config/packages/profiling.yaml` file
+and set this option:
+
+```yaml
+profiling:
+    stopwatch:
+        enabled: false
+```
+
+
+### Sentry
+
+If you installed the `sentry/sentry-symfony` package and enabled the bundle,
+you can plug your profilers into sentry tracing component, which will transparently
+send all timings to the sentry server.
+
+It is disabled per default to avoid accidentally sending data to sentry, if you
+wish to enable it, create the `config/packages/profiling.yaml` file
+and set this option:
+
+```yaml
+profiling:
+    sentry:
+        enabled: true
+```
+
+## CLI killswitch
+
+If you are working in CLI, and with to disable profiling for long running tasks
+or migration batches, simply add the `PROFILING_ENABLE=0` environment variable
+in your command line.
+
+This will not completely disable the bundle, this is a soft-disable and will only
+prevent profiliers from being created during this runtime, for example:
+
+```sh
+PROFILING_ENABLE=0 bin/console app:some-very-long-batch
+```
 
 # To-do list
 
-- add memory profiling in `Profiler`,
-- transparent `sentry/sentry` bridge for sending results in Sentry.
+- add memory profiling in `Profiler`.
 

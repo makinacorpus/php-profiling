@@ -9,15 +9,36 @@ use MakinaCorpus\Profiling\ProfilerContext;
 
 final class DefaultProfilerContext implements ProfilerContext
 {
+    private bool $enabled = true;
     /** @var Profiler */
     private array $profilers = [];
 
     /**
      * {@inheritdoc}
      */
+    public function toggle(bool $enabled): void
+    {
+        $this->enabled = $enabled;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isEnabled(): bool
+    {
+        return $this->enabled;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function start(?string $name = null): Profiler
     {
-        return $this->profilers[] = new DefaultProfiler($name);
+        if ($this->enabled) {
+            return $this->profilers[] = new DefaultProfiler($name);
+        } else {
+            return new NullProfiler();
+        }
     }
 
     /**

@@ -7,6 +7,20 @@ namespace MakinaCorpus\Profiling;
 interface ProfilerContext extends ProfilerFactory
 {
     /**
+     * Enable or disable profiling.
+     *
+     * It won't shut down currently running profilers, it will just prevent
+     * new profilers creation.
+     */
+    public function toggle(bool $enabled): void;
+
+    /**
+     * Is this context enabled, if disabled, any start attempt will result in a
+     * null instance given instead.
+     */
+    public function isEnabled(): bool;
+
+    /**
      * Is there at least one profiler running.
      */
     public function isRunning(): bool;

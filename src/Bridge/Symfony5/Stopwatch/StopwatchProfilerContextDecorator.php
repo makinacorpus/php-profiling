@@ -6,10 +6,12 @@ namespace MakinaCorpus\Profiling\Bridge\Symfony5\Stopwatch;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerContext;
+use MakinaCorpus\Profiling\Implementation\NullProfiler;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 final class StopwatchProfilerContextDecorator implements ProfilerContext
 {
+    private bool $enabled = true;
     private ProfilerContext $decorated;
     private Stopwatch $stopwatch;
 
@@ -22,9 +24,30 @@ final class StopwatchProfilerContextDecorator implements ProfilerContext
     /**
      * {@inheritdoc}
      */
+    public function toggle(bool $enabled): void
+    {
+        $this->decorated->toggle($enabled);
+        $this->enabled = $enabled;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isEnabled(): bool
+    {
+        return $this->enabled;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function start(?string $name = null): Profiler
     {
-        return new StopwatchProfilerDecorator($this->stopwatch, $this->decorated->start($name));
+        if ($this->enabled) {
+            return new StopwatchProfilerDecorator($this->stopwatch, $this->decorated->start($name));
+        } else {
+            return new NullProfiler();
+        }
     }
 
     /**

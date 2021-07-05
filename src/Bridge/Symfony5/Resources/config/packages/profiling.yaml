@@ -1,0 +1,24 @@
+#
+# Profiling configuration file, complete, will all default values.
+#
+profiling:
+    #
+    # Global kill switch, set this to false and profiling will be disabled
+    # forever. Please note there is the possibility of using environement
+    # variables to do a runtime soft-disable instead.
+    #
+    enabled: true
+
+    #
+    # Stopwatch decorator is enabled per default, but will be silently disabled
+    # if the '@debug.stopwatch' service is not registered into the container. 
+    #
+    stopwatch:
+        enabled: true
+
+    #
+    # Sentry decorator is disabled per default, and will be silently disabled
+    # if enabled and if the 'sentry/sentry-symfony' package is not configured. 
+    #
+    sentry:
+        enabled: false

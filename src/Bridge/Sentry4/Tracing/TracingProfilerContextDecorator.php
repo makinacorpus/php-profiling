@@ -6,10 +6,12 @@ namespace MakinaCorpus\Profiling\Bridge\Sentry4\Tracing;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerContext;
+use MakinaCorpus\Profiling\Implementation\NullProfiler;
 use Sentry\State\HubInterface;
 
 final class TracingProfilerContextDecorator implements ProfilerContext
 {
+    private bool $enabled = true;
     private ProfilerContext $decorated;
     private HubInterface $hub;
 
@@ -22,9 +24,30 @@ final class TracingProfilerContextDecorator implements ProfilerContext
     /**
      * {@inheritdoc}
      */
+    public function toggle(bool $enabled): void
+    {
+        $this->decorated->toggle($enabled);
+        $this->enabled = $enabled;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isEnabled(): bool
+    {
+        return $this->enabled;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function start(?string $name = null): Profiler
     {
-        return new TracingProfilerDecorator($this->hub->getTransaction(), $this->decorated->start($name), 0);
+        if ($this->enabled) {
+            return new TracingProfilerDecorator($this->hub->getTransaction(), $this->decorated->start($name), 0);
+        } else {
+            return new NullProfiler();
+        }
     }
 
     /**
