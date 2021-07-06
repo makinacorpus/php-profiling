@@ -2,10 +2,10 @@
 
 This library is very much alike the `symfony/stopwatch` component.
 
-This profiler uses the machine high resolution timer if available using the PHP
-`\hrtime()` function for timings, which is much much faster than using the
-`\microtime()` which may end up doing syscalls. Using `\hrtime()` function
-makes this API being suitable for running discretly in production.
+This profiler uses the monotonic high resolution timer if available using the PHP
+`\hrtime()` function for timings, which yields more precision and is resilient
+to system clock changes in opposition to `\microtime()` Using `\hrtime()`
+function makes this API being suitable for running discretly in production.
 
 # Usage
 
@@ -218,6 +218,13 @@ profiling:
     sentry:
         enabled: true
 ```
+
+## Memory usage
+
+The profiler class also measure memory usage, but beware that when using
+decorators (such as the Symfony stopwatch or Sentry integration) results will
+be imprecise due to those decorators own memory consumption. Moreover, memory
+measures will also include the profiler own consumed memory.
 
 ## CLI killswitch
 
