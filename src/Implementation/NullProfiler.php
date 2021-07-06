@@ -111,6 +111,21 @@ final class NullProfiler implements Profiler
     /**
      * {@inheritdoc}
      */
+    public function setDescription(string $description): void
+    {
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getDescription(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function setAttribute(string $name, $value): void
     {
     }

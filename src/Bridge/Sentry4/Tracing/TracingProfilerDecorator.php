@@ -45,6 +45,10 @@ final class TracingProfilerDecorator extends AbstractProfilerDecorator
     protected function doStop(): void
     {
         if (null !== $this->span) {
+            if ($description = $this->getDescription()) {
+                $this->span->setDescription($description);
+            }
+
             $this->span->finish();
         }
     }

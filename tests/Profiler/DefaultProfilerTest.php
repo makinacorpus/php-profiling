@@ -33,6 +33,17 @@ final class DefaultProfilerTest extends TestCase
     /**
      * @dataProvider getProfilers
      */
+    public function testGetDescription(Profiler $profiler): void
+    {
+        self::assertNull($profiler->getDescription());
+
+        $profiler->setDescription('Test');
+        self::assertSame('Test', $profiler->getDescription());
+    }
+
+    /**
+     * @dataProvider getProfilers
+     */
     public function testGetMemoryGetUsageStart(Profiler $profiler): void
     {
         self::assertGreaterThan(0, $profiler->getMemoryUsageStart());

@@ -69,6 +69,18 @@ interface Profiler extends ProfilerFactory
     public function getChildren(): iterable;
 
     /**
+     * Set profiler description.
+     *
+     * Description is a purely informational human readable string.
+     */
+    public function setDescription(string $description): void;
+
+    /**
+     * Get description.
+     */
+    public function getDescription(): ?string;
+
+    /**
      * Set arbitrary attribute.
      *
      * @param mixed $value

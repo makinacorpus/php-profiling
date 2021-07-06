@@ -157,6 +157,22 @@ abstract class AbstractProfilerDecorator implements Profiler
     /**
      * {@inheritdoc}
      */
+    public function setDescription(string $description): void
+    {
+        $this->decorated->setDescription($description);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getDescription(): ?string
+    {
+        return $this->decorated->getDescription();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function setAttribute(string $name, $value): void
     {
         $this->decorated->setAttribute($name, $value);

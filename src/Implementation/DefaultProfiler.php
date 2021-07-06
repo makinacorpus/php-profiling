@@ -17,9 +17,12 @@ final class DefaultProfiler implements Profiler
     private ?int $consumedMemory = null;
     private float $startedAt;
     private ?float $duration = null;
+
     private ?Profiler $parent = null;
     /** @var Profiler[] */
     private array $children = [];
+
+    private ?string $description = null;
     /** @var array<string, mixed> */
     private array $attributes = [];
 
@@ -173,6 +176,22 @@ final class DefaultProfiler implements Profiler
     public function getChildren(): iterable
     {
         return $this->children;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setDescription(string $description): void
+    {
+        $this->description = $description;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getDescription(): ?string
+    {
+        return $this->description;
     }
 
     /**
