@@ -9,8 +9,8 @@ interface ProfilerFactory
     /**
      * Start new profiler in this context.
      *
-     * @throws ProfilerClosedError
-     *   In case the current context or profiler was closed or flushed.
+     * In case the current context or profiler was closed or flushed, this
+     * will return a null instance.
      */
     public function start(?string $name = null): Profiler;
 }

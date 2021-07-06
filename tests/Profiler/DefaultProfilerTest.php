@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling\Tests\Profiler;
 
 use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\ProfilerClosedError;
 use MakinaCorpus\Profiling\Bridge\Symfony5\Stopwatch\StopwatchProfilerDecorator;
 use MakinaCorpus\Profiling\Implementation\DefaultProfiler;
+use MakinaCorpus\Profiling\Implementation\NullProfiler;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Stopwatch\Stopwatch;
 
@@ -46,12 +46,12 @@ final class DefaultProfilerTest extends TestCase
     /**
      * @dataProvider getProfilers
      */
-    public function testStartRaiseErrorIfStopped(Profiler $profiler): void
+    public function testStartReturnNullInstanceIfStopped(Profiler $profiler): void
     {
         $profiler->stop();
 
-        self::expectException(ProfilerClosedError::class);
-        $profiler->start();
+        $other = $profiler->start();
+        self::assertInstanceOf(NullProfiler::class, $other);
     }
 
     /**

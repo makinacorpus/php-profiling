@@ -34,6 +34,10 @@ abstract class AbstractProfilerDecorator implements Profiler
      */
     public function start(?string $name = null): Profiler
     {
+        if (!$this->decorated->isRunning()) {
+            return new NullProfiler();
+        }
+
         return $this->children[] = $this->createDecorator($this->decorated->start($name), $name);
     }
 

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling\Implementation;
 
 use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\ProfilerClosedError;
 
 /**
  * Default timer implementation: the one you'll ever need.
@@ -52,7 +51,7 @@ final class DefaultProfiler implements Profiler
     public function start(?string $name = null): Profiler
     {
         if (null !== $this->duration) {
-            throw new ProfilerClosedError();
+            return new NullProfiler();
         }
 
         return $this->children[] = new DefaultProfiler($name, $this);
