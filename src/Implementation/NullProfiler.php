@@ -39,6 +39,22 @@ final class NullProfiler implements Profiler
     /**
      * {@inheritdoc}
      */
+    public function getMemoryUsageStart(): int
+    {
+        return 0;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMemoryUsage(): int
+    {
+        return 0;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getRelativeStartTime(): float
     {
         return 0.0;

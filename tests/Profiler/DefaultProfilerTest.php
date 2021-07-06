@@ -33,6 +33,40 @@ final class DefaultProfilerTest extends TestCase
     /**
      * @dataProvider getProfilers
      */
+    public function testGetMemoryGetUsageStart(Profiler $profiler): void
+    {
+        self::assertGreaterThan(0, $profiler->getMemoryUsageStart());
+    }
+
+    /**
+     * @dataProvider getProfilers
+     */
+    public function testGetMemoryGetUsage(Profiler $profiler): void
+    {
+        self::assertGreaterThan(0, $profiler->getMemoryUsageStart());
+
+        $usage1 = $profiler->getMemoryUsage();
+
+        $a = \random_bytes(32);
+        $usage2 = $profiler->getMemoryUsage();
+
+        $profiler->stop();
+        $usage3 = $profiler->getMemoryUsage();
+
+        self::assertNotNull($a); // Just to avoid garbage collection of $a
+        self::assertGreaterThan(0, $usage1);
+        self::assertGreaterThan($usage1, $usage2);
+
+        if (DefaultProfiler::class === \get_class($profiler)) {
+            // With decorators, this might be untrue since they mess up
+            // with other components.
+            self::assertSame($usage2, $usage3);
+        }
+    }
+
+    /**
+     * @dataProvider getProfilers
+     */
     public function testStart(Profiler $profiler): void
     {
         $child = $profiler->start();

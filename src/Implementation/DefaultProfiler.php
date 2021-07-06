@@ -13,6 +13,8 @@ final class DefaultProfiler implements Profiler
 {
     private string $id;
     private ?string $name;
+    private int $startingMemory;
+    private ?int $consumedMemory = null;
     private float $startedAt;
     private ?float $duration = null;
     private ?Profiler $parent = null;
@@ -26,6 +28,7 @@ final class DefaultProfiler implements Profiler
         $this->parent = $parent;
         $this->id = self::generateUniqueId();
         $this->name = $name;
+        $this->startingMemory = \memory_get_usage();
         $this->startedAt = \hrtime(true);
     }
 
@@ -72,6 +75,7 @@ final class DefaultProfiler implements Profiler
             }
             return $elapsedTime;
         } else if (null === $this->duration) {
+            $this->consumedMemory = \memory_get_usage() - $this->startingMemory;
             foreach ($this->children as $profiler) {
                 $profiler->stop();
             }
@@ -87,6 +91,22 @@ final class DefaultProfiler implements Profiler
     public function isRunning(): bool
     {
         return null === $this->duration;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMemoryUsageStart(): int
+    {
+        return $this->startingMemory;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMemoryUsage(): int
+    {
+        return null === $this->consumedMemory ? (\memory_get_usage() - $this->startingMemory) : $this->consumedMemory;
     }
 
     /**

@@ -21,6 +21,16 @@ interface Profiler extends ProfilerFactory
     public function isRunning(): bool;
 
     /**
+     * Get starting memory usage.
+     */
+    public function getMemoryUsageStart(): int;
+
+    /**
+     * Get relative memory usage until now.
+     */
+    public function getMemoryUsage(): int;
+
+    /**
      * Get starting point from parent, in milliseconds.
      */
     public function getRelativeStartTime(): float;

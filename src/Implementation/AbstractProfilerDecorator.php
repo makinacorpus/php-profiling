@@ -85,6 +85,22 @@ abstract class AbstractProfilerDecorator implements Profiler
     /**
      * {@inheritdoc}
      */
+    public function getMemoryUsageStart(): int
+    {
+        return $this->decorated->getMemoryUsageStart();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMemoryUsage(): int
+    {
+        return $this->decorated->getMemoryUsage();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getRelativeStartTime(): float
     {
         return $this->decorated->getRelativeStartTime();
