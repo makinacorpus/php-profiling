@@ -36,7 +36,7 @@ final class TracingProfilerDecorator extends AbstractProfilerDecorator
      */
     protected function createDecorator(Profiler $decorated, ?string $name = null): self
     {
-        return new TracingProfilerDecorator($this->transaction, $this->decorated->start($name), $this->depth + 1);
+        return new TracingProfilerDecorator($this->transaction, $decorated, $this->depth + 1);
     }
 
     /**

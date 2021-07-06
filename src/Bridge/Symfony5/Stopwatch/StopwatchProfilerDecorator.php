@@ -25,7 +25,7 @@ final class StopwatchProfilerDecorator extends AbstractProfilerDecorator
      */
     protected function createDecorator(Profiler $decorated, ?string $name = null): self
     {
-        return new StopwatchProfilerDecorator($this->stopwatch, $this->decorated->start($name));
+        return new StopwatchProfilerDecorator($this->stopwatch, $decorated);
     }
 
     /**
