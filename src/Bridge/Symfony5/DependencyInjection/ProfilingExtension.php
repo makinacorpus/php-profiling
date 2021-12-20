@@ -38,7 +38,7 @@ final class ProfilingExtension extends Extension
         $container->setDefinition(DefaultProfilerContext::class, $profilerContext);
         $container->setAlias(ProfilerContext::class, DefaultProfilerContext::class);
 
-        if ($config['stopwatch']['enabled'] ?? true) {
+        if ($config['stopwatch']['enabled'] ?? false) {
             $decoratedInnerId = StopwatchProfilerContextDecorator::class . '.inner';
             $decoratorDef = new Definition();
             $decoratorDef->setClass(StopwatchProfilerContextDecorator::class);
