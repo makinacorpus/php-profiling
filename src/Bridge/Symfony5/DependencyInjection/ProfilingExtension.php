@@ -8,12 +8,13 @@ use MakinaCorpus\Profiling\ProfilerContext;
 use MakinaCorpus\Profiling\Bridge\Sentry4\Tracing\TracingProfilerContextDecorator;
 use MakinaCorpus\Profiling\Bridge\Symfony5\Stopwatch\StopwatchProfilerContextDecorator;
 use MakinaCorpus\Profiling\Implementation\DefaultProfilerContext;
+use MakinaCorpus\Profiling\Implementation\NullProfilerContext;
 use Sentry\State\HubInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\Parameter;
 
 final class ProfilingExtension extends Extension
 {
@@ -27,6 +28,10 @@ final class ProfilingExtension extends Extension
 
         // Configuration killswitch.
         if (!$config['enabled']) {
+            $profilerContext = new Definition();
+            $profilerContext->setClass(NullProfilerContext::class);
+            $container->setDefinition(NullProfilerContext::class, $profilerContext);
+            $container->setAlias(ProfilerContext::class, NullProfilerContext::class);
             return;
         }
 
