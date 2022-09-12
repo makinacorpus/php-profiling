@@ -2,21 +2,18 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Tests\Profiler;
+namespace MakinaCorpus\Profiling\Tests\Implementation;
 
 use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\Bridge\Symfony5\Stopwatch\StopwatchProfilerDecorator;
 use MakinaCorpus\Profiling\Implementation\DefaultProfiler;
 use MakinaCorpus\Profiling\Implementation\NullProfiler;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Stopwatch\Stopwatch;
 
 final class DefaultProfilerTest extends TestCase
 {
     public static function getProfilers()
     {
         yield [new DefaultProfiler()];
-        yield [new StopwatchProfilerDecorator(new Stopwatch(), new DefaultProfiler())];
     }
 
     public function testGetId(): void

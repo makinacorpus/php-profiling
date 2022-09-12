@@ -8,15 +8,27 @@ use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerContext;
 
 /**
- * @codeCoverageIgnore
+ * Default implementation that keeps everything into memory.
+ *
+ * This is a dangerous implementation to use, if it isn't being flushed
+ * regularly you will experience memory leaks, especially when running
+ * batches in CLI.
  */
-final class NullProfilerContext implements ProfilerContext
+abstract class AbstractProfilerContextDecorator implements ProfilerContext
 {
+    protected ProfilerContext $decorated;
+
+    public function __construct(ProfilerContext $decorated)
+    {
+        $this->decorated = $decorated;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function toggle(bool $enabled): void
     {
+        $this->decorated->toggle($enabled);
     }
 
     /**
@@ -24,7 +36,7 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function isEnabled(): bool
     {
-        return false;
+        return $this->decorated->isEnabled();
     }
 
     /**
@@ -32,7 +44,7 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function start(?string $name = null, ?array $channels = null): Profiler
     {
-        return new NullProfiler();
+        return $this->decorated->start($name, $channels);
     }
 
     /**
@@ -40,7 +52,7 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function isRunning(): bool
     {
-        return false;
+        return $this->decorated->isRunning();
     }
 
     /**
@@ -51,7 +63,7 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function getAllProfilers(): iterable
     {
-        return [];
+        return $this->decorated->getAllProfilers();
     }
 
     /**
@@ -59,5 +71,6 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function flush(): iterable
     {
+        return $this->decorated->flush();
     }
 }

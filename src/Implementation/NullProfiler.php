@@ -6,6 +6,9 @@ namespace MakinaCorpus\Profiling\Implementation;
 
 use MakinaCorpus\Profiling\Profiler;
 
+/**
+ * @codeCoverageIgnore
+ */
 final class NullProfiler implements Profiler
 {
     public function __construct(?string $name = null, ?Profiler $parent = null)
@@ -121,6 +124,14 @@ final class NullProfiler implements Profiler
     public function getDescription(): ?string
     {
         return null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getChannels(): array
+    {
+        return [];
     }
 
     /**

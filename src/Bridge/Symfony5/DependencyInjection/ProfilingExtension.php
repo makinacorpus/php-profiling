@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling\Bridge\Symfony5\DependencyInjection;
 
 use MakinaCorpus\Profiling\ProfilerContext;
-use MakinaCorpus\Profiling\Bridge\Sentry4\Tracing\TracingProfilerContextDecorator;
-use MakinaCorpus\Profiling\Bridge\Symfony5\Stopwatch\StopwatchProfilerContextDecorator;
-use MakinaCorpus\Profiling\Implementation\DefaultProfilerContext;
+use MakinaCorpus\Profiling\Handler\SentryHandler;
+use MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler;
+use MakinaCorpus\Profiling\Implementation\MemoryProfilerContext;
 use MakinaCorpus\Profiling\Implementation\NullProfilerContext;
+use MakinaCorpus\Profiling\Implementation\TracingProfilerContextDecorator;
 use Sentry\State\HubInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 final class ProfilingExtension extends Extension
 {
@@ -38,29 +40,65 @@ final class ProfilingExtension extends Extension
         $container->setParameter('env(PROFILING_ENABLE)', "1");
         $container->setParameter('profiling.enabled', "%env(bool:PROFILING_ENABLE)%");
 
+        // Default profiler context, acts as a factory of profilers.
         $profilerContext = new Definition();
-        $profilerContext->setClass(DefaultProfilerContext::class);
-        $container->setDefinition(DefaultProfilerContext::class, $profilerContext);
-        $container->setAlias(ProfilerContext::class, DefaultProfilerContext::class);
+        $profilerContext->setClass(MemoryProfilerContext::class);
+        $container->setDefinition(MemoryProfilerContext::class, $profilerContext);
+        $container->setAlias(ProfilerContext::class, MemoryProfilerContext::class);
 
-        if ($config['stopwatch']['enabled'] ?? false) {
-            $decoratedInnerId = StopwatchProfilerContextDecorator::class . '.inner';
-            $decoratorDef = new Definition();
-            $decoratorDef->setClass(StopwatchProfilerContextDecorator::class);
-            $decoratorDef->setDecoratedService(DefaultProfilerContext::class, $decoratedInnerId, 800);
-            $decoratorDef->setArguments([new Reference('debug.stopwatch'), new Reference($decoratedInnerId)]);
-            $decoratorDef->addMethodCall('toggle', [new Parameter('profiling.enabled')]);
-            $container->setDefinition(StopwatchProfilerContextDecorator::class, $decoratorDef);
+        $this->configureHandlers($container, $config);
+    }
+
+    private function configureHandlers(ContainerBuilder $container, array $config)
+    {
+        $handlerChannelMap = [];
+        $handlerReferences = [];
+
+        foreach ($config['handlers'] ?? [] as $name => $options) {
+            $definition = new Definition();
+            $serviceId = 'profiling.handler.' . $name;
+
+            switch ($options['type']) {
+
+                case 'sentry':
+                case 'sentry4':
+                    $definition->setClass(SentryHandler::class);
+                    $definition->setArguments([new Reference(HubInterface::class)]);
+                    break;
+
+                case 'stopwatch':
+                    $definition->setClass(SymfonyStopwatchHandler::class);
+                    $definition->setArguments([new Reference(Stopwatch::class)]);
+                    break;
+
+                default:
+                    throw new InvalidArgumentException(\sprintf("Handler '%s': type '%s' is not supported.", $name, $options['type']));
+            }
+
+            if (isset($options['channels'])) {
+                if (\is_string($options['channels'])) {
+                    $channels = [$options['channels']];
+                } else if (\is_array($options['channels'])) {
+                    $channels = $options['channels'];
+                } else {
+                    throw new InvalidArgumentException(\sprintf("Handler '%s': 'channels' must be a string or an array of string.", $name));
+                }
+
+                if ($channels) {
+                    $handlerChannelMap[$name] = \array_values(\array_unique($channels));
+                }
+            }
+
+            $container->setDefinition($serviceId, $definition);
+            $handlerReferences[] = new Reference($serviceId);
         }
 
-        if ($config['sentry']['enabled'] ?? false) {
-            $decoratedInnerId = TracingProfilerContextDecorator::class . '.inner';
-            $decoratorDef = new Definition();
-            $decoratorDef->setClass(TracingProfilerContextDecorator::class);
-            $decoratorDef->setDecoratedService(DefaultProfilerContext::class, $decoratedInnerId, 800);
-            $decoratorDef->setArguments([new Reference(HubInterface::class), new Reference($decoratedInnerId)]);
-            $decoratorDef->addMethodCall('toggle', [new Parameter('profiling.enabled')]);
-            $container->setDefinition(TracingProfilerContextDecorator::class, $decoratorDef);
+        if ($handlerReferences) {
+            $tracingContextDecoratorDefinition = new Definition();
+            $tracingContextDecoratorDefinition->setClass(TracingProfilerContextDecorator::class);
+            $tracingContextDecoratorDefinition->setArguments([new Reference('.inner'), $handlerReferences, $handlerChannelMap]);
+            $tracingContextDecoratorDefinition->setDecoratedService(ProfilerContext::class);
+            $container->setDefinition(TracingProfilerContextDecorator::class, $tracingContextDecoratorDefinition);
         }
     }
 

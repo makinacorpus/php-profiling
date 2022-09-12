@@ -7,6 +7,19 @@ This profiler uses the monotonic high resolution timer if available using the PH
 to system clock changes in opposition to `\microtime()` Using `\hrtime()`
 function makes this API being suitable for running discretly in production.
 
+# Roadmap
+
+## 2.0
+
+ - [x] Simplify global code architecture
+ - [x] Switch to handler instead of decorators
+ - [x] Implement handler configuration in symfony extension
+ - [x] Implement symfony autoconfiguration of channels
+ - [x] Reimplement Sentry using TraceHandler interface
+ - [x] Reimplement Stopwatch usign TraceHandler interface
+ - [ ] Tracing profiler decorator children are not decorated
+ - [ ] Implement file (flat, csv, json, etc...) TraceHandler interface
+
 # Usage
 
 Important notes:
@@ -20,11 +33,11 @@ Important notes:
 ## Basic usage
 
 ```php
-use MakinaCorpus\Profiling\Implementation\DefaultProfilerContext;
+use MakinaCorpus\Profiling\Implementation\MemoryProfilerContext;
 
 // First, create a context. If you are using a framework, you should
 // inject in your dependency injection container a global instance.
-$context = DefaultProfilerContext();
+$context = MemoryProfilerContext();
 
 // Start a new top-level profiler, which has no parent.
 // Please note that name is optional, it's purely informational.
@@ -182,49 +195,10 @@ class SomeService implements ProfilerContextAware
 
 And that's it, have fun !
 
-## Integration
-
-### Stopwatch component
-
-If you are working on a debug enabled environment, this component will plug
-itself onto the Symfony stopwatch component transparently. This means that all
-of your timers will appear in the profiler toolbar a no additional cost.
-
-This is enabled per default in case the `@debug.stopwatch` service is found in
-the container when cache are cleared.
-
-If you wish to disable it, create the `config/packages/profiling.yaml` file
-and set this option:
-
-```yaml
-profiling:
-    stopwatch:
-        enabled: false
-```
-
-
-### Sentry
-
-If you installed the `sentry/sentry-symfony` package and enabled the bundle,
-you can plug your profilers into sentry tracing component, which will transparently
-send all timings to the sentry server.
-
-It is disabled per default to avoid accidentally sending data to sentry, if you
-wish to enable it, create the `config/packages/profiling.yaml` file
-and set this option:
-
-```yaml
-profiling:
-    sentry:
-        enabled: true
-```
-
 ## Memory usage
 
-The profiler class also measure memory usage, but beware that when using
-decorators (such as the Symfony stopwatch or Sentry integration) results will
-be imprecise due to those decorators own memory consumption. Moreover, memory
-measures will also include the profiler own consumed memory.
+The profiler class also measure memory usage, but beware that those results
+will be biased by this API itself consuming memory.
 
 ## CLI killswitch
 

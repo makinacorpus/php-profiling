@@ -4,8 +4,16 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling;
 
-interface Profiler extends ProfilerFactory
+interface Profiler extends ProfilerTrace
 {
+    /**
+     * Start new child profiler.
+     *
+     * In case the current context or profiler was closed or flushed, this
+     * will return a null instance.
+     */
+    public function start(?string $name = null): Profiler;
+
     /**
      * End current timer or child timer, and return elasped time, in milliseconds.
      *
@@ -21,64 +29,11 @@ interface Profiler extends ProfilerFactory
     public function isRunning(): bool;
 
     /**
-     * Get starting memory usage.
-     */
-    public function getMemoryUsageStart(): int;
-
-    /**
-     * Get relative memory usage until now.
-     */
-    public function getMemoryUsage(): int;
-
-    /**
-     * Get starting point from parent, in milliseconds.
-     */
-    public function getRelativeStartTime(): float;
-
-    /**
-     * Get starting point from root, in milliseconds.
-     */
-    public function getAbsoluteStartTime(): float;
-
-    /**
-     * Get elapsed so far if running, or total time if stopped, in milliseconds.
-     */
-    public function getElapsedTime(): float;
-
-    /**
-     * Get a random unique generated identifier for this timer.
-     */
-    public function getId(): string;
-
-    /**
-     * Get this instance name, return the generated identifier if none was set.
-     */
-    public function getName(): string;
-
-    /**
-     * Get an absolute name including parent items, separator is "/" please
-     * avoid using this character into your profiler names.
-     */
-    public function getAbsoluteName(): string;
-
-    /**
-     * Get all children profilers.
-     *
-     * @return Profiler[]
-     */
-    public function getChildren(): iterable;
-
-    /**
      * Set profiler description.
      *
      * Description is a purely informational human readable string.
      */
     public function setDescription(string $description): void;
-
-    /**
-     * Get description.
-     */
-    public function getDescription(): ?string;
 
     /**
      * Set arbitrary attribute.
@@ -88,12 +43,4 @@ interface Profiler extends ProfilerFactory
      *   will grow the memory consumption.
      */
     public function setAttribute(string $name, $value): void;
-
-    /**
-     * Get all attributes.
-     *
-     * @return array<string, mixed>
-     *   Keys are attribute names, values are arbitrary values.
-     */
-    public function getAttributes(): array;
 }

@@ -7,7 +7,10 @@ namespace MakinaCorpus\Profiling\Implementation;
 use MakinaCorpus\Profiling\Profiler;
 
 /**
- * Default timer implementation: the one you'll ever need.
+ * Default timer implementation.
+ *
+ * In order to add additional logic, please use a decorator instead
+ * of messing with this class internals.
  */
 final class DefaultProfiler implements Profiler
 {
@@ -23,14 +26,24 @@ final class DefaultProfiler implements Profiler
     private array $children = [];
 
     private ?string $description = null;
+    /** @var string[] */
+    private array $channels = [];
     /** @var array<string, mixed> */
     private array $attributes = [];
 
-    public function __construct(?string $name = null, ?Profiler $parent = null)
-    {
-        $this->parent = $parent;
+    public function __construct(
+        ?string $name = null,
+        ?Profiler $parent = null,
+        ?array $channels = null
+    ) {
         $this->id = self::generateUniqueId();
         $this->name = $name;
+        $this->parent = $parent;
+
+        if ($channels) {
+            $this->channels = $channels;
+        }
+
         $this->startingMemory = \memory_get_usage();
         $this->startedAt = \hrtime(true);
     }
@@ -48,7 +61,8 @@ final class DefaultProfiler implements Profiler
      */
     public static function generateUniqueId(): string
     {
-        return \implode('', \array_rand(\array_flip(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']), 7));
+        // 8-hex totally random string - 16^8 > 4 billions possibilites.
+        return \bin2hex(\random_bytes(4));
     }
 
     /**
@@ -60,7 +74,7 @@ final class DefaultProfiler implements Profiler
             return new NullProfiler();
         }
 
-        return $this->children[] = new DefaultProfiler($name, $this);
+        return $this->children[] = new DefaultProfiler($name, $this, $this->channels);
     }
 
     /**
@@ -76,16 +90,21 @@ final class DefaultProfiler implements Profiler
                     $elapsedTime += $profiler->stop();
                 }
             }
+
             return $elapsedTime;
-        } else if (null === $this->duration) {
+        }
+
+        if (null === $this->duration) {
             $this->consumedMemory = \memory_get_usage() - $this->startingMemory;
+
             foreach ($this->children as $profiler) {
                 $profiler->stop();
             }
-            return $this->duration = self::nsecToMsec(\hrtime(true) - $this->startedAt);
-        } else {
-            return $this->duration;
+
+            $this->duration = self::nsecToMsec(\hrtime(true) - $this->startedAt);
         }
+
+        return $this->duration;
     }
 
     /**
@@ -192,6 +211,14 @@ final class DefaultProfiler implements Profiler
     public function getDescription(): ?string
     {
         return $this->description;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getChannels(): array
+    {
+        return $this->channels;
     }
 
     /**

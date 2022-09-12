@@ -11,5 +11,5 @@ interface ProfilerContextAware
     /**
      * Set the profiler context.
      */
-    public function setProfilerContext(ProfilerContext $context): void;
+    public function setProfilerContext(ProfilerContext $profilerContext): void;
 }

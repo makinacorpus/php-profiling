@@ -2,16 +2,27 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Tests\Context;
+namespace MakinaCorpus\Profiling\Tests\Implementation;
 
-use MakinaCorpus\Profiling\Implementation\DefaultProfilerContext;
+use MakinaCorpus\Profiling\Implementation\MemoryProfilerContext;
+use MakinaCorpus\Profiling\Implementation\TracingProfilerContextDecorator;
 use PHPUnit\Framework\TestCase;
 
-final class DefaultContextTest extends TestCase
+final class DefaultProfilerContextTest extends TestCase
 {
+    public static function getProfilerContexts()
+    {
+        yield [new MemoryProfilerContext()];
+        yield [new TracingProfilerContextDecorator(
+            new MemoryProfilerContext(),
+            [],
+            []
+        )];
+    }
+
     public function testIsRunning(): void
     {
-        $context = new DefaultProfilerContext();
+        $context = new MemoryProfilerContext();
         self::assertFalse($context->isRunning());
 
         $context->start();
@@ -23,7 +34,7 @@ final class DefaultContextTest extends TestCase
 
     public function testFlush(): void
     {
-        $context = new DefaultProfilerContext();
+        $context = new MemoryProfilerContext();
         $profiler1 = $context->start('one');
         $profiler2 = $context->start('two');
 

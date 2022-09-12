@@ -10,15 +10,41 @@ profiling:
     enabled: true
 
     #
-    # Stopwatch decorator is enabled per default, but will be silently disabled
-    # if the '@debug.stopwatch' service is not registered into the container. 
+    # Registered handlers for the TracingProfilerContextDecorator.
     #
-    stopwatch:
-        enabled: true
+    # Each handlers has a chance to react upon profiler close and do something
+    # with it.
+    #
+    # Keys in this array are arbitrary user given names, they won't alter any
+    # functions of this API.
+    #
+    # You can set the "channels" option on each item configured here, this will
+    # dispatch profilers into various loggers depending on their configured
+    # channel. Channel is set either:
+    #   - at the Profiler instance entry, using the "channel" tag.
+    #   - at the ProfilerContextAware implementation, using a compiler pass.
+    # The given array is a list of arbitrary names, each one can be prefixed
+    # using ! case in which this channel will be blacklisted.
+    # You cannot mix whitelist and blacklist.
+    # If nothing provided, all channels will go throught. 
+    #
+    handlers:
+        file_default:
+            type: file
+            path: "%kernel.logs_dir%/%kernel.environment%-profiling.trace"
+            date_format: Y-m-d
+            channels: ["!sql"]
+            trigger: ~
 
-    #
-    # Sentry decorator is disabled per default, and will be silently disabled
-    # if enabled and if the 'sentry/sentry-symfony' package is not configured. 
-    #
-    sentry:
-        enabled: false
+        file_sql:
+            type: file
+            path: "%kernel.logs_dir%/%kernel.environment%-profiling-sql.trace"
+            date_format: Y-m-d
+            channels: ["sql"]
+            trigger: ~
+
+        sentry:
+            type: sentry4
+
+        stopwatch:
+            type: stopwatch

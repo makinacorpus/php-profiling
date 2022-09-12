@@ -4,8 +4,16 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling;
 
-interface ProfilerContext extends ProfilerFactory
+interface ProfilerContext
 {
+    /**
+     * Start new profiler in this context.
+     *
+     * In case the current context or profiler was closed or flushed, this
+     * will return a null instance.
+     */
+    public function start(?string $name = null, ?array $channels = null): Profiler;
+
     /**
      * Enable or disable profiling.
      *
@@ -29,6 +37,9 @@ interface ProfilerContext extends ProfilerFactory
      * Get all currently registered profilers.
      *
      * @return Profiler[]
+     *
+     * @deprecated
+     *   Will be removed in next major.
      */
     public function getAllProfilers(): iterable;
 

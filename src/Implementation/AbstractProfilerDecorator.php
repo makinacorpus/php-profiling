@@ -9,8 +9,6 @@ use MakinaCorpus\Profiling\Profiler;
 abstract class AbstractProfilerDecorator implements Profiler
 {
     protected Profiler $decorated;
-    /** @var self[] */
-    protected array $children = [];
 
     public function __construct(Profiler $decorated)
     {
@@ -18,60 +16,19 @@ abstract class AbstractProfilerDecorator implements Profiler
     }
 
     /**
-     * Necessary for implementing correctly the start() method.
-     */
-    protected abstract function createDecorator(Profiler $decorated, ?string $name = null): self;
-
-    /**
-     * Stop this instance. Decorated instance is already stopped.
-     */
-    protected function doStop(): void
-    {
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function start(?string $name = null): Profiler
     {
-        if (!$this->decorated->isRunning()) {
-            return new NullProfiler();
-        }
-
-        return $this->children[] = $this->createDecorator($this->decorated->start($name), $name);
+        return $this->decorated->start($name);
     }
 
     /**
      * {@inheritdoc}
-     *
-     * Due to the API design, we cannot inject decorated instances to the
-     * decorated instance, so we have to actually re-implement the stop()
-     * method.
-     *
-     * This is basically the exact same as the DefaultProfiler implementation
-     * with the doStop() call added at the right place.
      */
     public function stop(?string $name = null): float
     {
-        if (null !== $name) {
-            $elapsedTime = 0.0;
-            foreach ($this->children as $profiler) {
-                if ($profiler->getName() === $name) {
-                    // This is probably wrong.
-                    $elapsedTime += $profiler->stop();
-                }
-            }
-            return $elapsedTime;
-        } else if ($this->decorated->isRunning()) {
-            foreach ($this->children as $profiler) {
-                $profiler->stop();
-            }
-            $this->decorated->stop();
-            $this->doStop();
-            return $this->decorated->getElapsedTime();
-        } else {
-            return $this->decorated->getElapsedTime();
-        }
+        return $this->decorated->stop($name);
     }
 
     /**
@@ -80,6 +37,30 @@ abstract class AbstractProfilerDecorator implements Profiler
     public function isRunning(): bool
     {
         return $this->decorated->isRunning();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getChildren(): iterable
+    {
+        return $this->decorated->getChildren();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setDescription(string $description): void
+    {
+        $this->decorated->setDescription($description);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setAttribute(string $name, $value): void
+    {
+        $this->decorated->setAttribute($name, $value);
     }
 
     /**
@@ -149,22 +130,6 @@ abstract class AbstractProfilerDecorator implements Profiler
     /**
      * {@inheritdoc}
      */
-    public function getChildren(): iterable
-    {
-        return $this->children;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setDescription(string $description): void
-    {
-        $this->decorated->setDescription($description);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function getDescription(): ?string
     {
         return $this->decorated->getDescription();
@@ -173,9 +138,9 @@ abstract class AbstractProfilerDecorator implements Profiler
     /**
      * {@inheritdoc}
      */
-    public function setAttribute(string $name, $value): void
+    public function getChannels(): array
     {
-        $this->decorated->setAttribute($name, $value);
+        return $this->decorated->getChannels();
     }
 
     /**

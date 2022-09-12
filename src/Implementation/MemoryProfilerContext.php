@@ -7,7 +7,14 @@ namespace MakinaCorpus\Profiling\Implementation;
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerContext;
 
-final class DefaultProfilerContext implements ProfilerContext
+/**
+ * Default implementation that keeps everything into memory.
+ *
+ * This is a dangerous implementation to use, if it isn't being flushed
+ * regularly you will experience memory leaks, especially when running
+ * batches in CLI.
+ */
+final class MemoryProfilerContext implements ProfilerContext
 {
     private bool $enabled = true;
     /** @var Profiler */
@@ -32,10 +39,10 @@ final class DefaultProfilerContext implements ProfilerContext
     /**
      * {@inheritdoc}
      */
-    public function start(?string $name = null): Profiler
+    public function start(?string $name = null, ?array $channels = null): Profiler
     {
         if ($this->enabled) {
-            return $this->profilers[] = new DefaultProfiler($name);
+            return $this->profilers[] = new DefaultProfiler($name, null, $channels);
         } else {
             return new NullProfiler();
         }
@@ -51,6 +58,9 @@ final class DefaultProfilerContext implements ProfilerContext
 
     /**
      * {@inheritdoc}
+     *
+     * @deprecated
+     *   Will be removed in next major.
      */
     public function getAllProfilers(): iterable
     {
