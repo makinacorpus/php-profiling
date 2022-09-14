@@ -42,9 +42,17 @@ abstract class AbstractProfilerContextDecorator implements ProfilerContext
     /**
      * {@inheritdoc}
      */
+    public function create(?string $name = null, ?array $channels = null): Profiler
+    {
+        return $this->decorated->create($name, $channels);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function start(?string $name = null, ?array $channels = null): Profiler
     {
-        return $this->decorated->start($name, $channels);
+        return $this->create($name, $channels)->execute();
     }
 
     /**

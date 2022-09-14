@@ -125,16 +125,38 @@ final class TracingProfilerContextDecorator extends AbstractProfilerContextDecor
     /**
      * {@inheritdoc}
      */
-    public function start(?string $name = null, ?array $channels = null): Profiler
+    public function create(?string $name = null, ?array $channels = null): Profiler
     {
-        $profiler = $this->decorated->start($name, $channels);
-        $handlers = $this->findHandlers($profiler);
+        $ret = $this->decorated->create($name, $channels);
 
-        if ($handlers) {
-            return new TracingProfilerDecorator($profiler, $handlers);
+        if (!$ret instanceof DefaultProfiler) {
+            throw new \LogicException(\sprintf("Profiler must be an instanceof %s", DefaultProfiler::class));
         }
 
-        return $profiler;
+        $handlers = $this->findHandlers($ret);
+
+        return $ret
+            ->addStartCallback(function (Profiler $profiler) use ($handlers) {
+                foreach ($handlers as $handler) {
+                    \assert($handler instanceof TraceHandler);
+                    $handler->onStart($profiler);
+                }
+            })
+            ->addStopCallback(function (Profiler $profiler) use ($handlers) {
+                foreach ($handlers as $handler) {
+                    \assert($handler instanceof TraceHandler);
+                    $handler->onStop($profiler);
+                }
+            })
+        ;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function start(?string $name = null, ?array $channels = null): Profiler
+    {
+        return $this->create($name, $channels)->execute();
     }
 
     /**

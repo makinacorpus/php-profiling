@@ -7,7 +7,7 @@ namespace MakinaCorpus\Profiling;
 interface Profiler extends ProfilerTrace
 {
     /**
-     * Start new child profiler.
+     * Create and start new child profiler.
      *
      * In case the current context or profiler was closed or flushed, this
      * will return a null instance.

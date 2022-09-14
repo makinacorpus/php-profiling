@@ -30,8 +30,16 @@ final class DispatchProfilerContextDecorator extends AbstractProfilerContextDeco
     /**
      * {@inheritdoc}
      */
-    public function start(?string $name = null, ?array $channels = null): Profiler
+    public function create(?string $name = null, ?array $channels = null): Profiler
     {
-        return $this->decorated->start($name, $this->channels);
+        if ($channels) {
+            foreach ($this->channels as $channel) {
+                $channels[] = $channel;
+            }
+        } else {
+            $channels = $this->channels;
+        }
+
+        return $this->decorated->create($name, $channels);
     }
 }

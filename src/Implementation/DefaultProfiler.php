@@ -20,10 +20,16 @@ final class DefaultProfiler implements Profiler
     private ?int $consumedMemory = null;
     private float $startedAt;
     private ?float $duration = null;
+    private bool $started = false;
 
     private ?Profiler $parent = null;
     /** @var Profiler[] */
     private array $children = [];
+
+    /** @var callable[] */
+    private array $onStart = [];
+    /** @var callable[] */
+    private array $onStop = [];
 
     private ?string $description = null;
     /** @var string[] */
@@ -43,9 +49,6 @@ final class DefaultProfiler implements Profiler
         if ($channels) {
             $this->channels = $channels;
         }
-
-        $this->startingMemory = \memory_get_usage();
-        $this->startedAt = \hrtime(true);
     }
 
     /**
@@ -66,6 +69,43 @@ final class DefaultProfiler implements Profiler
     }
 
     /**
+     * Set on start method.
+     */
+    public function addStartCallback(callable $callback): self
+    {
+        $this->onStart[] = $callback;
+
+        return $this;
+    }
+
+    public function addStopCallback(callable $callback): self
+    {
+        $this->onStop[] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Really start timer.
+     */
+    public function execute(): self
+    {
+        if ($this->started) {
+            return $this;
+        }
+
+        foreach ($this->onStart as $callback) {
+            $callback($this);
+        }
+
+        $this->startingMemory = \memory_get_usage();
+        $this->startedAt = \hrtime(true);
+        $this->started = true;
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function start(?string $name = null): Profiler
@@ -74,7 +114,18 @@ final class DefaultProfiler implements Profiler
             return new NullProfiler();
         }
 
-        return $this->children[] = new DefaultProfiler($name, $this, $this->channels);
+        // @todo this will consume time and memory...
+        $child = new DefaultProfiler($name, $this, $this->channels);
+        foreach ($this->onStart as $callback) {
+            $child->addStartCallback($callback);
+        }
+        foreach ($this->onStop as $callback) {
+            $child->addStopCallback($callback);
+        }
+
+        $this->children[] = $child;
+
+        return $child->execute();
     }
 
     /**
@@ -82,6 +133,10 @@ final class DefaultProfiler implements Profiler
      */
     public function stop(?string $name = null): float
     {
+        if (!$this->started) {
+            return 0.0;
+        }
+
         if (null !== $name) {
             $elapsedTime = 0.0;
             foreach ($this->children as $profiler) {
@@ -96,12 +151,15 @@ final class DefaultProfiler implements Profiler
 
         if (null === $this->duration) {
             $this->consumedMemory = \memory_get_usage() - $this->startingMemory;
+            $this->duration = self::nsecToMsec(\hrtime(true) - $this->startedAt);
+
+            foreach ($this->onStop as $callback) {
+                $callback($this);
+            }
 
             foreach ($this->children as $profiler) {
                 $profiler->stop();
             }
-
-            $this->duration = self::nsecToMsec(\hrtime(true) - $this->startedAt);
         }
 
         return $this->duration;
@@ -112,7 +170,7 @@ final class DefaultProfiler implements Profiler
      */
     public function isRunning(): bool
     {
-        return null === $this->duration;
+        return $this->started && null === $this->duration;
     }
 
     /**
@@ -120,7 +178,7 @@ final class DefaultProfiler implements Profiler
      */
     public function getMemoryUsageStart(): int
     {
-        return $this->startingMemory;
+        return $this->started ? $this->startingMemory : 0;
     }
 
     /**
@@ -128,7 +186,7 @@ final class DefaultProfiler implements Profiler
      */
     public function getMemoryUsage(): int
     {
-        return null === $this->consumedMemory ? (\memory_get_usage() - $this->startingMemory) : $this->consumedMemory;
+        return $this->started ? (null === $this->consumedMemory ? (\memory_get_usage() - $this->startingMemory) : $this->consumedMemory) : 0;
     }
 
     /**
@@ -149,7 +207,7 @@ final class DefaultProfiler implements Profiler
      */
     public function getAbsoluteStartTime(): float
     {
-        if (null === $this->parent) {
+        if (!$this->started || null === $this->parent) {
             return 0.0;
         }
 
@@ -162,7 +220,7 @@ final class DefaultProfiler implements Profiler
      */
     public function getElapsedTime(): float
     {
-        return null === $this->duration ? self::nsecToMsec(\hrtime(true) - $this->startedAt) : $this->duration;
+        return $this->started ? (null === $this->duration ? self::nsecToMsec(\hrtime(true) - $this->startedAt) : $this->duration) : 0.0;
     }
 
     /**

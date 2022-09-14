@@ -7,7 +7,15 @@ namespace MakinaCorpus\Profiling;
 interface ProfilerContext
 {
     /**
-     * Start new profiler in this context.
+     * Create a profiler in this context, do not start it..
+     *
+     * In case the current context or profiler was closed or flushed, this
+     * will return a null instance.
+     */
+    public function create(?string $name = null, ?array $channels = null): Profiler;
+
+    /**
+     * Start new profiler in this context, start it.
      *
      * In case the current context or profiler was closed or flushed, this
      * will return a null instance.

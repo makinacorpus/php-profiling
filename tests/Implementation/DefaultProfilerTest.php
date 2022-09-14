@@ -43,7 +43,7 @@ final class DefaultProfilerTest extends TestCase
      */
     public function testGetMemoryGetUsageStart(Profiler $profiler): void
     {
-        self::assertGreaterThan(0, $profiler->getMemoryUsageStart());
+        self::assertGreaterThan(0, $profiler->execute()->getMemoryUsageStart());
     }
 
     /**
@@ -51,6 +51,8 @@ final class DefaultProfilerTest extends TestCase
      */
     public function testGetMemoryGetUsage(Profiler $profiler): void
     {
+        $profiler->execute();
+        $foo = new \DateTimeImmutable();
         self::assertGreaterThan(0, $profiler->getMemoryUsageStart());
 
         $usage1 = $profiler->getMemoryUsage();
@@ -77,7 +79,7 @@ final class DefaultProfilerTest extends TestCase
      */
     public function testStart(Profiler $profiler): void
     {
-        $child = $profiler->start();
+        $child = $profiler->execute()->start();
 
         self::assertTrue($profiler->isRunning());
         self::assertTrue($child->isRunning());
@@ -90,6 +92,7 @@ final class DefaultProfilerTest extends TestCase
      */
     public function testStartReturnNullInstanceIfStopped(Profiler $profiler): void
     {
+        $profiler->execute();
         $profiler->stop();
 
         $other = $profiler->start();
@@ -101,7 +104,7 @@ final class DefaultProfilerTest extends TestCase
      */
     public function testStop(Profiler $profiler): void
     {
-        $child = $profiler->start();
+        $child = $profiler->execute()->start();
 
         self::assertTrue($profiler->isRunning());
         self::assertTrue($child->isRunning());
@@ -116,7 +119,7 @@ final class DefaultProfilerTest extends TestCase
      */
     public function testStopChild(Profiler $profiler): void
     {
-        $child1 = $profiler->start();
+        $child1 = $profiler->execute()->start();
         $child2 = $profiler->start('foo');
 
         self::assertTrue($profiler->isRunning());
@@ -134,7 +137,7 @@ final class DefaultProfilerTest extends TestCase
      */
     public function testStopChildNonExisting(Profiler $profiler): void
     {
-        $child1 = $profiler->start();
+        $child1 = $profiler->execute()->start();
         $child2 = $profiler->start('foo');
 
         self::assertTrue($profiler->isRunning());
@@ -152,6 +155,8 @@ final class DefaultProfilerTest extends TestCase
      */
     public function testIsRunning(Profiler $profiler): void
     {
+        self::assertFalse($profiler->isRunning());
+        $profiler->execute();
         self::assertTrue($profiler->isRunning());
 
         $profiler->stop();
@@ -223,6 +228,7 @@ final class DefaultProfilerTest extends TestCase
      */
     public function testGetElapsedTimeWhileRunning(Profiler $profiler): void
     {
+        $profiler->execute();
         $elapsed1 = $profiler->getElapsedTime();
         self::assertNotNull($elapsed1);
 

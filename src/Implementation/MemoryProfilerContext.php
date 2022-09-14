@@ -39,13 +39,21 @@ final class MemoryProfilerContext implements ProfilerContext
     /**
      * {@inheritdoc}
      */
-    public function start(?string $name = null, ?array $channels = null): Profiler
+    public function create(?string $name = null, ?array $channels = null): Profiler
     {
         if ($this->enabled) {
             return $this->profilers[] = new DefaultProfiler($name, null, $channels);
         } else {
             return new NullProfiler();
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function start(?string $name = null, ?array $channels = null): Profiler
+    {
+        return $this->create()->execute();
     }
 
     /**
