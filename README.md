@@ -17,7 +17,7 @@ function makes this API being suitable for running discretly in production.
  - [x] Implement symfony autoconfiguration of channels
  - [x] Reimplement Sentry using TraceHandler interface
  - [x] Reimplement Stopwatch usign TraceHandler interface
- - [ ] Tracing profiler decorator children are not decorated
+ - [x] Tracing profiler decorator children are not decorated
  - [ ] Implement file (flat, csv, json, etc...) TraceHandler interface
 
 # Usage
