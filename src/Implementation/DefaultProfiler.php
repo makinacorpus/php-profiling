@@ -20,7 +20,9 @@ final class DefaultProfiler implements Profiler
     private ?int $consumedMemory = null;
     private float $startedAt;
     private ?float $duration = null;
+    private ?float $durationNano = null;
     private bool $started = false;
+    private bool $running = false;
 
     private ?Profiler $parent = null;
     /** @var Profiler[] */
@@ -101,9 +103,10 @@ final class DefaultProfiler implements Profiler
             $callback($this);
         }
 
+        $this->started = true;
+        $this->running = true;
         $this->startingMemory = \memory_get_usage();
         $this->startedAt = \hrtime(true);
-        $this->started = true;
 
         return $this;
     }
@@ -134,38 +137,32 @@ final class DefaultProfiler implements Profiler
     /**
      * {@inheritdoc}
      */
-    public function stop(?string $name = null): float
+    public function stop(?string $name = null): void
     {
-        if (!$this->started) {
-            return 0.0;
-        }
-
         if (null !== $name) {
-            $elapsedTime = 0.0;
             foreach ($this->children as $profiler) {
                 if ($profiler->getName() === $name) {
-                    // This is probably wrong.
-                    $elapsedTime += $profiler->stop();
+                    $profiler->stop();
                 }
             }
-
-            return $elapsedTime;
+            return;
         }
 
-        if (null === $this->duration) {
-            $this->consumedMemory = \memory_get_usage() - $this->startingMemory;
-            $this->duration = self::nsecToMsec(\hrtime(true) - $this->startedAt);
-
-            foreach ($this->onStop as $callback) {
-                $callback($this);
-            }
-
-            foreach ($this->children as $profiler) {
-                $profiler->stop();
-            }
+        if (!$this->running) {
+            return;
         }
 
-        return $this->duration;
+        $this->durationNano = \hrtime(true) - $this->startedAt;
+        $this->consumedMemory = \memory_get_usage() - $this->startingMemory;
+        $this->duration = self::nsecToMsec($this->durationNano);
+        $this->running = false;
+
+        foreach ($this->onStop as $callback) {
+            $callback($this);
+        }
+        foreach ($this->children as $profiler) {
+            $profiler->stop();
+        }
     }
 
     /**
@@ -173,7 +170,7 @@ final class DefaultProfiler implements Profiler
      */
     public function isRunning(): bool
     {
-        return $this->started && null === $this->duration;
+        return $this->running;
     }
 
     /**
@@ -189,7 +186,13 @@ final class DefaultProfiler implements Profiler
      */
     public function getMemoryUsage(): int
     {
-        return $this->started ? (null === $this->consumedMemory ? (\memory_get_usage() - $this->startingMemory) : $this->consumedMemory) : 0;
+        if (!$this->started) {
+            return 0;
+        }
+        if (null === $this->consumedMemory) {
+            return \memory_get_usage() - $this->startingMemory;
+        }
+        return $this->consumedMemory;
     }
 
     /**
@@ -219,11 +222,31 @@ final class DefaultProfiler implements Profiler
     }
 
     /**
-     * Get elapsed so far if running, or total time if stopped, in milliseconds.
+     * {@inheritdoc}
      */
     public function getElapsedTime(): float
     {
-        return $this->started ? (null === $this->duration ? self::nsecToMsec(\hrtime(true) - $this->startedAt) : $this->duration) : 0.0;
+        if (!$this->started) {
+            return 0.0;
+        }
+        if (null === $this->duration) {
+            return self::nsecToMsec(\hrtime(true) - $this->startedAt);
+        }
+        return $this->duration;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getElapsedTimeNano(): float
+    {
+        if (!$this->started) {
+            return 0.0;
+        }
+        if (null === $this->durationNano) {
+            return \hrtime(true) - $this->startedAt;
+        }
+        return $this->duration;
     }
 
     /**

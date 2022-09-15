@@ -6,7 +6,9 @@ namespace MakinaCorpus\Profiling\Bridge\Symfony5\DependencyInjection;
 
 use MakinaCorpus\Profiling\ProfilerContext;
 use MakinaCorpus\Profiling\Handler\SentryHandler;
+use MakinaCorpus\Profiling\Handler\StreamHandler;
 use MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler;
+use MakinaCorpus\Profiling\Handler\TriggerHandlerDecorator;
 use MakinaCorpus\Profiling\Implementation\MemoryProfilerContext;
 use MakinaCorpus\Profiling\Implementation\NullProfilerContext;
 use MakinaCorpus\Profiling\Implementation\TracingProfilerContextDecorator;
@@ -62,6 +64,18 @@ final class ProfilingExtension extends Extension
 
             switch ($options['type']) {
 
+                case 'file':
+                    $definition->setClass(StreamHandler::class);
+                    $filePermission = null;
+                    if (isset($options['file_permission'])) {
+                        if (!\is_int($options['file_permission']) || !\ctype_digit($options['file_permission'])) {
+                            throw new InvalidArgumentException(\sprintf("Handler '%s': options 'file_permission' must be a permission integer.", $name));
+                        }
+                        $filePermission = (int)$options['file_permission'];
+                    }
+                    $definition->setArguments([$options['path'], $filePermission, $options['file_lock'] ?? false]);
+                    break;
+
                 case 'sentry':
                 case 'sentry4':
                     $definition->setClass(SentryHandler::class);
@@ -92,6 +106,14 @@ final class ProfilingExtension extends Extension
             }
 
             $container->setDefinition($serviceId, $definition);
+
+            if ($triggerName = $options['trigger']) {
+                $decorator = new Definition();
+                $decorator->setClass(TriggerHandlerDecorator::class);
+                $decorator->setArguments([new Reference('.inner'), $triggerName]);
+                $decorator->setDecoratedService($serviceId);
+            }
+
             $handlerReferences[] = new Reference($serviceId);
         }
 

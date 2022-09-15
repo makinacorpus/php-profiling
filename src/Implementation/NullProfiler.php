@@ -50,9 +50,8 @@ final class NullProfiler implements Profiler
     /**
      * {@inheritdoc}
      */
-    public function stop(?string $name = null): float
+    public function stop(?string $name = null): void
     {
-        return 0.0;
     }
 
     /**
@@ -99,6 +98,14 @@ final class NullProfiler implements Profiler
      * {@inheritdoc}
      */
     public function getElapsedTime(): float
+    {
+        return 0.0;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getElapsedTimeNano(): float
     {
         return 0.0;
     }

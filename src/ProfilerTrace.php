@@ -35,6 +35,11 @@ interface ProfilerTrace
     public function getElapsedTime(): float;
 
     /**
+     * Get elapsed so far if running, or total time if stopped, in nanoseconds.
+     */
+    public function getElapsedTimeNano(): float;
+
+    /**
      * Get a random unique generated identifier for this timer.
      */
     public function getId(): string;

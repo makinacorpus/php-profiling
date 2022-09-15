@@ -50,7 +50,7 @@ interface Profiler extends ProfilerTrace
      *
      * If timer was already closed, this should remain silent and do nothing.
      */
-    public function stop(?string $name = null): float;
+    public function stop(?string $name = null): void;
 
     /**
      * Is this profiler still running.

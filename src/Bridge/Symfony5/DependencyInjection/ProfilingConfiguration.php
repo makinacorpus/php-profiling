@@ -30,6 +30,8 @@ final class ProfilingConfiguration implements ConfigurationInterface
                             // If null, then string
                             ->variableNode('channels')->end()
                             ->scalarNode('date_format')->defaultNull()->end()
+                            ->booleanNode('file_lock')->defaultFalse()->end()
+                            ->scalarNode('file_permission')->defaultNull()->end()
                             ->scalarNode('path')->defaultNull()->end()
                             ->scalarNode('trigger')->defaultNull()->end()
                             ->scalarNode('type')->end()
