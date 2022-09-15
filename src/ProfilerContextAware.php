@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Implementation;
-
-use MakinaCorpus\Profiling\ProfilerContext;
+namespace MakinaCorpus\Profiling;
 
 interface ProfilerContextAware
 {

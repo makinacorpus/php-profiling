@@ -2,21 +2,26 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Implementation;
+namespace MakinaCorpus\Profiling\ProfilerContext;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerContext;
 
-/**
- * @codeCoverageIgnore
- */
-final class NullProfilerContext implements ProfilerContext
+abstract class AbstractProfilerContextDecorator implements ProfilerContext
 {
+    protected ProfilerContext $decorated;
+
+    public function __construct(ProfilerContext $decorated)
+    {
+        $this->decorated = $decorated;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function toggle(bool $enabled): void
     {
+        $this->decorated->toggle($enabled);
     }
 
     /**
@@ -24,7 +29,15 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function isEnabled(): bool
     {
-        return false;
+        return $this->decorated->isEnabled();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function create(?string $name = null, ?array $channels = null): Profiler
+    {
+        return $this->decorated->create($name, $channels);
     }
 
     /**
@@ -32,7 +45,7 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function start(?string $name = null, ?array $channels = null): Profiler
     {
-        return new NullProfiler();
+        return $this->create($name, $channels)->execute();
     }
 
     /**
@@ -40,7 +53,7 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function isRunning(): bool
     {
-        return false;
+        return $this->decorated->isRunning();
     }
 
     /**
@@ -51,7 +64,7 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function getAllProfilers(): iterable
     {
-        return [];
+        return $this->decorated->getAllProfilers();
     }
 
     /**
@@ -59,5 +72,6 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function flush(): iterable
     {
+        return $this->decorated->flush();
     }
 }

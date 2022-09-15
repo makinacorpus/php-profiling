@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling\Bridge\Symfony5\DependencyInjection\Compiler;
 
 use MakinaCorpus\Profiling\ProfilerContext;
-use MakinaCorpus\Profiling\Implementation\DispatchProfilerContextDecorator;
-use MakinaCorpus\Profiling\Implementation\ProfilerContextAware;
+use MakinaCorpus\Profiling\ProfilerContextAware;
+use MakinaCorpus\Profiling\ProfilerContext\DispatchProfilerContextDecorator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling\Tests\Handler;
 
 use MakinaCorpus\Profiling\TraceHandler;
-use MakinaCorpus\Profiling\Implementation\MemoryProfilerContext;
+use MakinaCorpus\Profiling\ProfilerContext\MemoryProfilerContext;
 use PHPUnit\Framework\TestCase;
 
 abstract class AbstractHandlerTest extends TestCase

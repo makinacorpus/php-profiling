@@ -15,7 +15,7 @@ class StreamHandler extends AbstractFormatterHandler
     protected ?int $filePermission = 0;
     protected bool $useLocking = true;
     protected bool $directoryCreated = false;
-    protected bool $appendLineFeed = false;
+    protected bool $appendLineFeed = true;
 
     public function __construct($stream, ?int $filePermission = null, bool $useLocking = false)
     {

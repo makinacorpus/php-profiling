@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Tests\Implementation;
+namespace MakinaCorpus\Profiling\Tests\Profiler;
 
 use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\Implementation\DefaultProfiler;
-use MakinaCorpus\Profiling\Implementation\NullProfiler;
+use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
+use MakinaCorpus\Profiling\Profiler\NullProfiler;
 use PHPUnit\Framework\TestCase;
 
 final class DefaultProfilerTest extends TestCase

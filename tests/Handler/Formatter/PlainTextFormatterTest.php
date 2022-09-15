@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler\Formatter;
 
-use MakinaCorpus\Profiling\Implementation\DefaultProfiler;
+use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
 use PHPUnit\Framework\TestCase;
 
 class PlainTextFormatterTest extends TestCase

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Bridge\Symfony5;
 
+use MakinaCorpus\Profiling\ProfilerContextAware;
 use MakinaCorpus\Profiling\Bridge\Symfony5\DependencyInjection\Compiler\ProfilerContextAwarePass;
-use MakinaCorpus\Profiling\Implementation\ProfilerContextAware;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

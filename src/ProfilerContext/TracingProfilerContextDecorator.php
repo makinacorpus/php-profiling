@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Implementation;
+namespace MakinaCorpus\Profiling\ProfilerContext;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerContext;
 use MakinaCorpus\Profiling\TraceHandler;
+use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
+use MakinaCorpus\Profiling\Profiler\NullProfiler;
 
 /**
  * Emits profiler traces into registered trace handlers.

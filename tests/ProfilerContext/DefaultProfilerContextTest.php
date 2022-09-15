@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Tests\Implementation;
+namespace MakinaCorpus\Profiling\Tests\ProfilerContext;
 
-use MakinaCorpus\Profiling\Implementation\MemoryProfilerContext;
-use MakinaCorpus\Profiling\Implementation\TracingProfilerContextDecorator;
+use MakinaCorpus\Profiling\ProfilerContext\MemoryProfilerContext;
+use MakinaCorpus\Profiling\ProfilerContext\TracingProfilerContextDecorator;
 use PHPUnit\Framework\TestCase;
 
 final class DefaultProfilerContextTest extends TestCase

@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Implementation;
+namespace MakinaCorpus\Profiling\ProfilerContext;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerContext;
+use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
+use MakinaCorpus\Profiling\Profiler\NullProfiler;
 
 /**
  * Default implementation that keeps everything into memory.
@@ -13,22 +15,21 @@ use MakinaCorpus\Profiling\ProfilerContext;
  * This is a dangerous implementation to use, if it isn't being flushed
  * regularly you will experience memory leaks, especially when running
  * batches in CLI.
+ *
+ * @todo Find a better way to plug this.
  */
-abstract class AbstractProfilerContextDecorator implements ProfilerContext
+final class MemoryProfilerContext implements ProfilerContext
 {
-    protected ProfilerContext $decorated;
-
-    public function __construct(ProfilerContext $decorated)
-    {
-        $this->decorated = $decorated;
-    }
+    private bool $enabled = true;
+    /** @var Profiler */
+    private array $profilers = [];
 
     /**
      * {@inheritdoc}
      */
     public function toggle(bool $enabled): void
     {
-        $this->decorated->toggle($enabled);
+        $this->enabled = $enabled;
     }
 
     /**
@@ -36,7 +37,7 @@ abstract class AbstractProfilerContextDecorator implements ProfilerContext
      */
     public function isEnabled(): bool
     {
-        return $this->decorated->isEnabled();
+        return $this->enabled;
     }
 
     /**
@@ -44,7 +45,11 @@ abstract class AbstractProfilerContextDecorator implements ProfilerContext
      */
     public function create(?string $name = null, ?array $channels = null): Profiler
     {
-        return $this->decorated->create($name, $channels);
+        if ($this->enabled) {
+            return $this->profilers[] = new DefaultProfiler($name, null, $channels);
+        } else {
+            return new NullProfiler();
+        }
     }
 
     /**
@@ -52,7 +57,7 @@ abstract class AbstractProfilerContextDecorator implements ProfilerContext
      */
     public function start(?string $name = null, ?array $channels = null): Profiler
     {
-        return $this->create($name, $channels)->execute();
+        return $this->create()->execute();
     }
 
     /**
@@ -60,7 +65,7 @@ abstract class AbstractProfilerContextDecorator implements ProfilerContext
      */
     public function isRunning(): bool
     {
-        return $this->decorated->isRunning();
+        return !empty($this->profilers);
     }
 
     /**
@@ -71,7 +76,7 @@ abstract class AbstractProfilerContextDecorator implements ProfilerContext
      */
     public function getAllProfilers(): iterable
     {
-        return $this->decorated->getAllProfilers();
+        return $this->profilers;
     }
 
     /**
@@ -79,6 +84,16 @@ abstract class AbstractProfilerContextDecorator implements ProfilerContext
      */
     public function flush(): iterable
     {
-        return $this->decorated->flush();
+        $ret = $this->profilers;
+        // Early reset, if later PHP becomes asynchronous, the context instance
+        // can start being re-used right up now, while profilers are being
+        // stopped in the background.
+        $this->profilers = [];
+
+        foreach ($ret as $profiler) {
+            $profiler->stop();
+        }
+
+        return $ret;
     }
 }

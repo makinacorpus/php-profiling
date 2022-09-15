@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Implementation;
+namespace MakinaCorpus\Profiling\ProfilerContext;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerContext;

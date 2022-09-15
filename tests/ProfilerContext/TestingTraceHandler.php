@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Tests\Implementation;
+namespace MakinaCorpus\Profiling\Tests\ProfilerContext;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerTrace;
