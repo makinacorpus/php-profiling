@@ -18,6 +18,30 @@ final class NullProfiler implements Profiler
     /**
      * {@inheritdoc}
      */
+    public function addStartCallback(callable $callback): Profiler
+    {
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function addStopCallback(callable $callback): Profiler
+    {
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function execute(): Profiler
+    {
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function start(?string $name = null): Profiler
     {
         return $this;

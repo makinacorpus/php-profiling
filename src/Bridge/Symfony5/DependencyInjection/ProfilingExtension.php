@@ -13,6 +13,7 @@ use MakinaCorpus\Profiling\Implementation\TracingProfilerContextDecorator;
 use Sentry\State\HubInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -43,6 +44,7 @@ final class ProfilingExtension extends Extension
         // Default profiler context, acts as a factory of profilers.
         $profilerContext = new Definition();
         $profilerContext->setClass(MemoryProfilerContext::class);
+        $profilerContext->addMethodCall('toggle', [new Parameter('profiling.enabled')]);
         $container->setDefinition(MemoryProfilerContext::class, $profilerContext);
         $container->setAlias(ProfilerContext::class, MemoryProfilerContext::class);
 

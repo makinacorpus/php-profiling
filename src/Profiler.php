@@ -7,7 +7,36 @@ namespace MakinaCorpus\Profiling;
 interface Profiler extends ProfilerTrace
 {
     /**
+     * Add on start callback.
+     *
+     * @param callable $callback
+     *   Takes on argument, a Profiler instance, return is ignored.
+     *
+     * @return $this
+     */
+    public function addStartCallback(callable $callback): Profiler;
+
+    /**
+     * Add on stop callback.
+     *
+     * @param callable $callback
+     *   Takes on argument, a Profiler instance, return is ignored.
+     *
+     * @return $this
+     */
+    public function addStopCallback(callable $callback): Profiler;
+
+    /**
+     * Start timer.
+     *
+     * @return $this
+     */
+    public function execute(): Profiler;
+
+    /**
      * Create and start new child profiler.
+     *
+     * All on start and stop callbacks are propagated to children.
      *
      * In case the current context or profiler was closed or flushed, this
      * will return a null instance.

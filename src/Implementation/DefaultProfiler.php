@@ -69,16 +69,19 @@ final class DefaultProfiler implements Profiler
     }
 
     /**
-     * Set on start method.
+     * {@inheritdoc}
      */
-    public function addStartCallback(callable $callback): self
+    public function addStartCallback(callable $callback): Profiler
     {
         $this->onStart[] = $callback;
 
         return $this;
     }
 
-    public function addStopCallback(callable $callback): self
+    /**
+     * {@inheritdoc}
+     */
+    public function addStopCallback(callable $callback): Profiler
     {
         $this->onStop[] = $callback;
 
@@ -86,9 +89,9 @@ final class DefaultProfiler implements Profiler
     }
 
     /**
-     * Really start timer.
+     * {@inheritdoc}
      */
-    public function execute(): self
+    public function execute(): Profiler
     {
         if ($this->started) {
             return $this;

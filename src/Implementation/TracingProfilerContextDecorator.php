@@ -129,6 +129,10 @@ final class TracingProfilerContextDecorator extends AbstractProfilerContextDecor
     {
         $ret = $this->decorated->create($name, $channels);
 
+        if ($ret instanceof NullProfiler) {
+            return $ret;
+        }
+
         if (!$ret instanceof DefaultProfiler) {
             throw new \LogicException(\sprintf("Profiler must be an instanceof %s", DefaultProfiler::class));
         }
