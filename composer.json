@@ -28,6 +28,9 @@
         "symfony/stopwatch": "^6.1"
     },
     "autoload": {
+        "files": [
+            "compat.php"
+        ],
         "psr-4": {
             "MakinaCorpus\\Profiling\\": "src/"
         }
