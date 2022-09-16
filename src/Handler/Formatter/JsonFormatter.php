@@ -29,10 +29,8 @@ class JsonFormatter implements Formatter
              'id' => $trace->getId(),
              'name' => $trace->getAbsoluteName(),
              'relname' => $trace->getName(),
-             'timestr' => Helper::formatTime($elapsedTime),
              'timems' => $elapsedTime,
              'timenano' => $trace->getElapsedTime(),
-             'memstr' => Helper::formatMemory($consumedMemory),
              'membytes' => $consumedMemory,
              'childcount' => \count($trace->getChildren()),
         ]);
