@@ -14,7 +14,7 @@ use MakinaCorpus\Profiling\Profiler;
  */
 final class DefaultProfiler implements Profiler
 {
-    private string $id;
+    private ?string $id = null;
     private ?string $name;
     private int $startingMemory;
     private ?int $consumedMemory = null;
@@ -45,7 +45,6 @@ final class DefaultProfiler implements Profiler
         ?Profiler $parent = null,
         ?array $channels = null
     ) {
-        $this->id = self::generateUniqueId();
         $this->name = $name;
         $this->parent = $parent;
 
@@ -255,7 +254,7 @@ final class DefaultProfiler implements Profiler
      */
     public function getId(): string
     {
-        return $this->id;
+        return $this->id ?? ($this->id = self::generateUniqueId());
     }
 
     /**
@@ -263,7 +262,7 @@ final class DefaultProfiler implements Profiler
      */
     public function getName(): string
     {
-        return $this->name ?? $this->id;
+        return $this->name ?? $this->getId();
     }
 
     /**
