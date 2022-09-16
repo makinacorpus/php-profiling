@@ -27,31 +27,6 @@ class PlainTextFormatter implements Formatter
     private ?int $pid = null;
 
     /**
-     * Format memory string.
-     */
-    public static function formatMemory(int $bytes): string
-    {
-        if ($bytes >= 1024 * 1024 * 1024) {
-            return \round($bytes / 1024 / 1024 / 1024,  2) . ' GiB';
-        }
-        if ($bytes >= 1024 * 1024) {
-            return \round($bytes / 1024 / 1024,  2) . ' MiB';
-        }
-        if ($bytes >= 1024) {
-            return \round($bytes / 1024,  2) . ' KiB';
-        }
-        return $bytes . ' B';
-    }
-
-    /**
-     * Format time string.
-     */
-    public static function formatTime(float $msec): string
-    {
-        return \round($msec, 3) . ' ms';
-    }
-
-    /**
      * Set format.
      */
     public function setFormat(string $format): void
@@ -79,10 +54,10 @@ class PlainTextFormatter implements Formatter
              '{id}' => $trace->getId(),
              '{name}' => $trace->getAbsoluteName(),
              '{relname}' => $trace->getName(),
-             '{timestr}' => self::formatTime($elapsedTime),
+             '{timestr}' => Helper::formatTime($elapsedTime),
              '{timems}' => $elapsedTime,
              '{timenano}' => $trace->getElapsedTime(),
-             '{memstr}' => self::formatMemory($consumedMemory),
+             '{memstr}' => Helper::formatMemory($consumedMemory),
              '{membytes}' => $consumedMemory,
              '{childcount}' => \count($trace->getChildren()),
         ]);

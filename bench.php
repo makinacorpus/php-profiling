@@ -1,12 +1,13 @@
 <?php
 
+use MakinaCorpus\Profiling\Handler\StreamHandler;
 use MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler;
+use MakinaCorpus\Profiling\Handler\Formatter\JsonFormatter;
 use MakinaCorpus\Profiling\ProfilerContext\DispatchProfilerContextDecorator;
 use MakinaCorpus\Profiling\ProfilerContext\MemoryProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\TracingProfilerContextDecorator;
 use MakinaCorpus\Profiling\Tests\ProfilerContext\TestingTraceHandler;
 use Symfony\Component\Stopwatch\Stopwatch;
-use MakinaCorpus\Profiling\Handler\StreamHandler;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -17,6 +18,10 @@ require_once __DIR__ . '/vendor/autoload.php';
  * impact on production runtime or not.
  */
 
+$plainTextFormatter = new StreamHandler(sys_get_temp_dir() . '/profiling.txt');
+$jsonTextFormatter = new StreamHandler(sys_get_temp_dir() . '/profiling.json');
+$jsonTextFormatter->setFormatter(new JsonFormatter());
+
 $context = new DispatchProfilerContextDecorator(
     new TracingProfilerContextDecorator(
         new MemoryProfilerContext(),
@@ -25,9 +30,8 @@ $context = new DispatchProfilerContextDecorator(
             'other' => new SymfonyStopwatchHandler(
                 new Stopwatch()
             ),
-            'file' => new StreamHandler(
-                sys_get_temp_dir() . '/profiling.txt'
-            ),
+            'file' => $plainTextFormatter,
+            'json' => $jsonTextFormatter,
         ],
         [
             'default' => ['!foo', '!bar'],
