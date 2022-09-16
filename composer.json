@@ -16,16 +16,17 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">= 7.4"
+        "php": ">= 8.0"
     },
     "require-dev": {
+        "phpbench/phpbench": "^1.2",
         "phpunit/phpunit": "^9.2",
+        "sentry/sentry": "^3.8",
         "symfony/config": "^5",
         "symfony/dependency-injection": "^5",
-        "symfony/yaml": "^5",
-        "sentry/sentry": "^3.8",
         "symfony/http-client": "^6.1",
-        "symfony/stopwatch": "^6.1"
+        "symfony/stopwatch": "^6.1",
+        "symfony/yaml": "^5"
     },
     "autoload": {
         "files": [

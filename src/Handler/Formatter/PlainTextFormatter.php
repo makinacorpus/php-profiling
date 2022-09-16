@@ -32,15 +32,15 @@ class PlainTextFormatter implements Formatter
     public static function formatMemory(int $bytes): string
     {
         if ($bytes >= 1024 * 1024 * 1024) {
-            return \sprintf('%.1f GiB', $bytes / 1024 / 1024 / 1024);
+            return \round($bytes / 1024 / 1024 / 1024,  2) . ' GiB';
         }
         if ($bytes >= 1024 * 1024) {
-            return \sprintf('%.1f MiB', $bytes / 1024 / 1024);
+            return \round($bytes / 1024 / 1024,  2) . ' MiB';
         }
         if ($bytes >= 1024) {
-            return \sprintf('%d KiB', $bytes / 1024);
+            return \round($bytes / 1024,  2) . ' KiB';
         }
-        return \sprintf('%d B', $bytes);
+        return $bytes . ' B';
     }
 
     /**
@@ -48,7 +48,7 @@ class PlainTextFormatter implements Formatter
      */
     public static function formatTime(float $msec): string
     {
-        return \sprintf("%.3F ms", $msec);
+        return \round($msec, 3) . ' ms';
     }
 
     /**

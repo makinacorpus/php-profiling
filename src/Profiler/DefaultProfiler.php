@@ -24,6 +24,7 @@ final class DefaultProfiler implements Profiler
     private bool $started = false;
     private bool $running = false;
 
+    private ?string $absoluteName = null;
     private ?Profiler $parent = null;
     /** @var Profiler[] */
     private array $children = [];
@@ -270,7 +271,13 @@ final class DefaultProfiler implements Profiler
      */
     public function getAbsoluteName(): string
     {
-        return (null === $this->parent) ? $this->getName() : ($this->parent->getAbsoluteName() . '/' . $this->getName());
+        if (null === $this->parent) {
+            return $this->name;
+        }
+        if (null === $this->absoluteName) {
+            $this->absoluteName = $this->parent->getAbsoluteName() . '/' . $this->name;
+        }
+        return $this->absoluteName;
     }
 
     /**
