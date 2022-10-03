@@ -271,10 +271,10 @@ final class DefaultProfiler implements Profiler
     public function getAbsoluteName(): string
     {
         if (null === $this->parent) {
-            return $this->name;
+            return $this->name ?? $this->getId();
         }
         if (null === $this->absoluteName) {
-            $this->absoluteName = $this->parent->getAbsoluteName() . '/' . $this->name;
+            $this->absoluteName = $this->parent->getAbsoluteName() . '/' . ($this->name ?? $this->getId());
         }
         return $this->absoluteName;
     }

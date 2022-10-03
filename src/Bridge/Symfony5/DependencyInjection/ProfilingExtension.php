@@ -114,7 +114,7 @@ final class ProfilingExtension extends Extension
                 $decorator->setDecoratedService($serviceId);
             }
 
-            $handlerReferences[] = new Reference($serviceId);
+            $handlerReferences[$name] = new Reference($serviceId);
         }
 
         if ($handlerReferences) {
