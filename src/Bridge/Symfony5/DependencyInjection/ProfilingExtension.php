@@ -9,10 +9,12 @@ use MakinaCorpus\Profiling\Handler\SentryHandler;
 use MakinaCorpus\Profiling\Handler\StreamHandler;
 use MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler;
 use MakinaCorpus\Profiling\Handler\TriggerHandlerDecorator;
+use MakinaCorpus\Profiling\ProfilerContext\DefaultProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\MemoryProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\NullProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\TracingProfilerContextDecorator;
 use Sentry\State\HubInterface;
+use Symfony\Bundle\WebProfilerBundle\WebProfilerBundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Parameter;
@@ -44,11 +46,21 @@ final class ProfilingExtension extends Extension
         $container->setParameter('profiling.enabled', "%env(bool:PROFILING_ENABLE)%");
 
         // Default profiler context, acts as a factory of profilers.
-        $profilerContext = new Definition();
-        $profilerContext->setClass(MemoryProfilerContext::class);
+        if (\in_array(WebProfilerBundle::class, $container->getParameter('kernel.bundles'))) {
+            $profilerContext = new Definition();
+            $profilerContext->setClass(MemoryProfilerContext::class);
+        } else {
+            $profilerContext = new Definition();
+            $profilerContext->setClass(DefaultProfilerContext::class);
+        }
+
         $profilerContext->addMethodCall('toggle', [new Parameter('profiling.enabled')]);
-        $container->setDefinition(MemoryProfilerContext::class, $profilerContext);
-        $container->setAlias(ProfilerContext::class, MemoryProfilerContext::class);
+        // Allow container to purge memory on terminate. This will also help
+        // when running long-running CLI commands, such as a message bus
+        // consumer.
+        $profilerContext->addTag('kernel.reset', ['method' => 'flush']);
+        $container->setDefinition('profiling.context.default', $profilerContext);
+        $container->setAlias(ProfilerContext::class, 'profiling.context.default');
 
         $this->configureHandlers($container, $config);
     }
