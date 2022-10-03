@@ -42,7 +42,9 @@ class StreamHandler extends AbstractFormatterHandler
      */
     public function onStop(ProfilerTrace $trace): void
     {
-        $this->write($this->format($trace));
+        if ($this->shouldLog($trace)) {
+            $this->write($this->format($trace));
+        }
     }
 
     /**

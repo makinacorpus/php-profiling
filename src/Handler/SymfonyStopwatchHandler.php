@@ -6,13 +6,12 @@ namespace MakinaCorpus\Profiling\Handler;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerTrace;
-use MakinaCorpus\Profiling\TraceHandler;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
  * Composer require symfony/stopwatch:>=5
  */
-class SymfonyStopwatchHandler implements TraceHandler
+class SymfonyStopwatchHandler extends AbstractHandler
 {
     private Stopwatch $stopwatch;
     private array $started = [];

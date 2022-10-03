@@ -17,14 +17,14 @@ class PlainTextFormatterTest extends TestCase
         $profiler->execute();
 
         self::assertMatchesRegularExpression(
-            '/\[\d+\]\[[a-z0-9]+\] pouet: time: \d+.\d{3} ms memory: \d+ B/',
+            '/\[\d+\]\[[a-z0-9]+\] pouet: time: \d+.\d{3} ms memory: \d+(|.\d+) ([KMG]i|)B/',
             $formatter->format($profiler)
         );
 
         $profiler->stop();
 
         self::assertMatchesRegularExpression(
-            '/\[\d+\]\[[a-z0-9]+\] pouet: time: \d+.\d{3} ms memory: \d+ B/',
+            '/\[\d+\]\[[a-z0-9]+\] pouet: time: \d+.\d{3} ms memory: \d+(|.\d+) ([KMG]i|)B/',
             $formatter->format($profiler)
         );
     }

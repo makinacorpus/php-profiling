@@ -34,6 +34,10 @@ profiling:
             path: "%kernel.logs_dir%/%kernel.environment%-profiling.trace"
             date_format: Y-m-d
             channels: ["!sql"]
+            threshold:
+                # If no suffix provided, this is a number of bytes, otherwise
+                # it will be parsed like PHP ini file memory values.
+                memory: 2M
             trigger: ~
 
         file_sql:
@@ -41,10 +45,16 @@ profiling:
             path: "%kernel.logs_dir%/%kernel.environment%-profiling-sql.trace"
             date_format: Y-m-d
             channels: ["sql"]
+            threshold:
+                # Time threshold will always be millesconds.
+                # You set a float there, such as 1.25 for example.
+                time: 100
             trigger: ~
 
+        # Sentry does not support threshold.
         sentry:
             type: sentry4
 
+        # Stopwatch does not support threshold.
         stopwatch:
             type: stopwatch

@@ -53,6 +53,26 @@ final class ProfilingExtension extends Extension
         $this->configureHandlers($container, $config);
     }
 
+    private function parseMemoryString(string $value): int
+    {
+        $matches = [];
+        if (!\preg_match('/(\d+(\.\d+|))\s*([KMG]|)/', $value, $matches)) {
+            throw new InvalidArgumentException(\sprintf("Invalid byte quantity string, expected: 'x.y[K|M|G]', got: '%s'", $value));
+        }
+        $value = (float) $matches[1];
+        if ($matches[3]) {
+            switch ($matches[3]) {
+                case 'K':
+                    return (int) \round($value * 1024);
+                case 'M':
+                    return (int) \round($value * 1024 * 1024);
+                case 'G':
+                    return (int) \round($value * 1024 * 1024 * 1024);
+            }
+        }
+        return (int) \round($value);
+    }
+
     private function configureHandlers(ContainerBuilder $container, array $config)
     {
         $handlerChannelMap = [];
@@ -89,6 +109,23 @@ final class ProfilingExtension extends Extension
 
                 default:
                     throw new InvalidArgumentException(\sprintf("Handler '%s': type '%s' is not supported.", $name, $options['type']));
+            }
+
+            if (isset($options['threshold'])) {
+                $hasThreshold = false;
+                $memoryThreshold = null;
+                $timeThreshold = null;
+                if (isset($options['threshold']['memory'])) {
+                    $hasThreshold = true;
+                    $memoryThreshold = $this->parseMemoryString($options['threshold']['memory']);
+                }
+                if ($options['threshold']['time']) {
+                    $hasThreshold = true;
+                    $timeThreshold = (float) $options['threshold']['time'];
+                }
+                if ($hasThreshold) {
+                    $definition->addMethodCall('setThreshold', [$memoryThreshold, $timeThreshold]);
+                }
             }
 
             if (isset($options['channels'])) {

@@ -33,6 +33,14 @@ class TriggerHandlerDecorator implements TraceHandler
     /**
      * {@inheritdoc}
      */
+    public function setThreshold(?int $memoryThreshold, ?float $timeThreshold): void
+    {
+        $this->decorated->setThreshold($memoryThreshold, $timeThreshold);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function onStart(Profiler $profiler): void
     {
         if ($this->isEnabled()) {

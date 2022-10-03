@@ -12,6 +12,11 @@ namespace MakinaCorpus\Profiling;
 interface TraceHandler
 {
     /**
+     * Set threshold from which traces will be logged.
+     */
+    public function setThreshold(?int $memoryThreshold, ?float $timeThreshold): void;
+
+    /**
      * Handler profiler start.
      */
     public function onStart(Profiler $profiler): void;

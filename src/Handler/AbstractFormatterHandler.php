@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling\Handler;
 
 use MakinaCorpus\Profiling\ProfilerTrace;
-use MakinaCorpus\Profiling\TraceHandler;
 use MakinaCorpus\Profiling\Handler\Formatter\PlainTextFormatter;
 
-abstract class AbstractFormatterHandler implements TraceHandler
+abstract class AbstractFormatterHandler extends AbstractHandler
 {
     private bool $started = false;
     private ?Formatter $formatter = null;

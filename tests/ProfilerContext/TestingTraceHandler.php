@@ -6,9 +6,9 @@ namespace MakinaCorpus\Profiling\Tests\ProfilerContext;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\ProfilerTrace;
-use MakinaCorpus\Profiling\TraceHandler;
+use MakinaCorpus\Profiling\Handler\AbstractHandler;
 
-final class TestingTraceHandler implements TraceHandler
+final class TestingTraceHandler extends AbstractHandler
 {
     private array $all = [];
     private array $stopped = [];

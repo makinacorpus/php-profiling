@@ -14,7 +14,7 @@ use Sentry\Tracing\SpanContext;
 /**
  * Composer require sentry/sentry:^3.8
  */
-class SentryHandler implements TraceHandler
+class SentryHandler extends AbstractHandler
 {
     private HubInterface $hub;
     /** @param Span */
