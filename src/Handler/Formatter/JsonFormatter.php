@@ -6,10 +6,12 @@ namespace MakinaCorpus\Profiling\Handler\Formatter;
 
 use MakinaCorpus\Profiling\ProfilerTrace;
 use MakinaCorpus\Profiling\Handler\Formatter;
+use MakinaCorpus\Profiling\Helper\WithPidTrait;
 
 class JsonFormatter implements Formatter
 {
-    private ?int $pid = null;
+    use WithPidTrait;
+
     private bool $started = false;
 
     /**
@@ -21,18 +23,18 @@ class JsonFormatter implements Formatter
             $this->started = true;
         }
 
-        $elapsedTime = $trace->getElapsedTime();
-        $consumedMemory = $trace->getMemoryUsage();
-
         return \json_encode([
-             'pid' => $this->pid ?? ($this->pid = \getmypid()),
-             'id' => $trace->getId(),
-             'name' => $trace->getAbsoluteName(),
-             'relname' => $trace->getName(),
-             'timems' => $elapsedTime,
-             'timenano' => $trace->getElapsedTime(),
-             'membytes' => $consumedMemory,
-             'childcount' => \count($trace->getChildren()),
+            'pid' => $this->getPid(),
+            'created' => (new \DateTimeImmutable())->format(\DateTime::ISO8601),
+            'id' => $trace->getId(),
+            'name' => $trace->getAbsoluteName(),
+            'relname' => $trace->getName(),
+            'time' => $trace->getElapsedTime(),
+            'timenano' => $trace->getElapsedTimeNano(),
+            'mem' => $trace->getMemoryUsage(),
+            'description' => $trace->getDescription(),
+            'channels' => $trace->getChannels(),
+            'attributes' => $trace->getAttributes(),
         ]);
     }
 }

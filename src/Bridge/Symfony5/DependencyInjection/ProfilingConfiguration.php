@@ -32,9 +32,15 @@ final class ProfilingConfiguration implements ConfigurationInterface
                             ->scalarNode('date_format')->defaultNull()->end()
                             ->booleanNode('file_lock')->defaultFalse()->end()
                             ->scalarNode('file_permission')->defaultNull()->end()
+                            // For "stream" type only.
                             ->scalarNode('path')->defaultNull()->end()
                             ->scalarNode('trigger')->defaultNull()->end()
-                            ->scalarNode('type')->end()
+                            ->scalarNode('type')->defaultNull()->end()
+                            // When type is "store" only.
+                            ->scalarNode('store')->defaultNull()->end()
+                            ->scalarNode('store_uri')->defaultNull()->end()
+                            ->scalarNode('store_table')->defaultNull()->end()
+                            // Will be ignored if handler doesn't support it.
                             ->arrayNode('threshold')
                                 ->children()
                                     ->scalarNode('memory')->defaultNull()->end()

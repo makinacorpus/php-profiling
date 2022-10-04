@@ -6,6 +6,8 @@ namespace MakinaCorpus\Profiling\Handler\Formatter;
 
 use MakinaCorpus\Profiling\ProfilerTrace;
 use MakinaCorpus\Profiling\Handler\Formatter;
+use MakinaCorpus\Profiling\Helper\Format;
+use MakinaCorpus\Profiling\Helper\WithPidTrait;
 
 /**
  * Available tokens are:
@@ -22,9 +24,10 @@ use MakinaCorpus\Profiling\Handler\Formatter;
  */
 class PlainTextFormatter implements Formatter
 {
+    use WithPidTrait;
+
     private bool $started = false;
     private string $format = '[{pid}][{id}] {name}: time: {timestr} memory: {memstr}';
-    private ?int $pid = null;
 
     /**
      * Set format.
@@ -50,14 +53,14 @@ class PlainTextFormatter implements Formatter
         $consumedMemory = $trace->getMemoryUsage();
 
         return \strtr($this->format, [
-             '{pid}' => $this->pid ?? ($this->pid = \getmypid()),
+             '{pid}' => $this->getPid(),
              '{id}' => $trace->getId(),
              '{name}' => $trace->getAbsoluteName(),
              '{relname}' => $trace->getName(),
-             '{timestr}' => Helper::formatTime($elapsedTime),
+             '{timestr}' => Format::time($elapsedTime),
              '{timems}' => $elapsedTime,
              '{timenano}' => $trace->getElapsedTime(),
-             '{memstr}' => Helper::formatMemory($consumedMemory),
+             '{memstr}' => Format::memory($consumedMemory),
              '{membytes}' => $consumedMemory,
              '{childcount}' => \count($trace->getChildren()),
         ]);

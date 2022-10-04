@@ -51,6 +51,23 @@ profiling:
                 time: 100
             trigger: ~
 
+        #
+        # This example is a "slow query log" feature.
+        #
+        # An example that will store everything into a databse table. You can
+        # use all other options. "type" is optional when "store" is set.
+        #
+        # "store_table" is optional, default table name is "profiling_trace".
+        # You could use "%env(resolve:DATABASE_URL)%" for database URI.
+        #
+        slow_query_log:
+            store: goat-query
+            store_uri: pgsql://foo:bar@example.com/database
+            store_table: slow_query_log
+            channels: ["sql"]
+            threshold:
+                time: 100
+
         # Sentry does not support threshold.
         sentry:
             type: sentry4

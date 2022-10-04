@@ -2,18 +2,14 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Handler\Formatter;
+namespace MakinaCorpus\Profiling\Helper;
 
-class Helper
+class Format
 {
-    private bool $started = false;
-    private string $format = '[{pid}][{id}] {name}: time: {timestr} memory: {memstr}';
-    private ?int $pid = null;
-
     /**
      * Format memory string.
      */
-    public static function formatMemory(int $bytes): string
+    public static function memory(int $bytes): string
     {
         $prefix = '';
         if ($bytes < 0) {
@@ -36,7 +32,7 @@ class Helper
     /**
      * Format time string.
      */
-    public static function formatTime(float $msec): string
+    public static function time(float $msec): string
     {
         return \round($msec, 3) . ' ms';
     }

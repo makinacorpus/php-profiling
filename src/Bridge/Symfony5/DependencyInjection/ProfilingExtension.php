@@ -6,6 +6,7 @@ namespace MakinaCorpus\Profiling\Bridge\Symfony5\DependencyInjection;
 
 use MakinaCorpus\Profiling\ProfilerContext;
 use MakinaCorpus\Profiling\Handler\SentryHandler;
+use MakinaCorpus\Profiling\Handler\StoreHandler;
 use MakinaCorpus\Profiling\Handler\StreamHandler;
 use MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler;
 use MakinaCorpus\Profiling\Handler\TriggerHandlerDecorator;
@@ -13,7 +14,7 @@ use MakinaCorpus\Profiling\ProfilerContext\DefaultProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\MemoryProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\NullProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\TracingProfilerContextDecorator;
-use Sentry\State\HubInterface;
+use MakinaCorpus\Profiling\Store\GoatQueryTraceStore;
 use Symfony\Bundle\WebProfilerBundle\WebProfilerBundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -94,6 +95,13 @@ final class ProfilingExtension extends Extension
             $definition = new Definition();
             $serviceId = 'profiling.handler.' . $name;
 
+            if (empty($options['type'])) {
+                if (empty($options['store'])) {
+                    throw new InvalidArgumentException(\sprintf("Handler '%s': is missing 'type'.", $name));
+                }
+                $options['type'] = 'store';
+            }
+
             switch ($options['type']) {
 
                 case 'file':
@@ -117,6 +125,37 @@ final class ProfilingExtension extends Extension
                 case 'stopwatch':
                     $definition->setClass(SymfonyStopwatchHandler::class);
                     $definition->setArguments([new Reference(Stopwatch::class)]);
+                    break;
+
+                case 'store':
+                    $definition->setClass(StoreHandler::class);
+                    $storeServiceId = $serviceId . '.store';
+
+                    if (empty($options['store'])) {
+                        throw new InvalidArgumentException(\sprintf("Handler '%s': is missing 'store'.", $name));
+                    }
+
+                    switch ($options['store']) {
+
+                        case 'goat-query':
+                            if (empty($options['store_uri'])) {
+                                throw new InvalidArgumentException(\sprintf("Handler '%s': is missing 'store_uri'.", $name, $options['store']));
+                            }
+
+                            $storeDefinition = new Definition();
+                            $storeDefinition->setClass(GoatQueryTraceStore::class);
+                            $storeDefinition->setArguments([
+                                $options['store_uri'],
+                                $options['store_table'] ?? null
+                            ]);
+                            $container->setDefinition($storeServiceId, $storeDefinition);
+
+                            $definition->setArguments([new Reference($storeServiceId)]);
+                            break;
+
+                        default:
+                            throw new InvalidArgumentException(\sprintf("Handler '%s': store '%s' is not supported.", $name, $options['store']));
+                    }
                     break;
 
                 default:

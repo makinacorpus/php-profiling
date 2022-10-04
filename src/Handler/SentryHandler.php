@@ -65,7 +65,7 @@ class SentryHandler extends AbstractHandler
     }
 
     /**
-     * Flush any remaining buffer.
+     * {@inheritdoc}
      */
     public function flush(): void
     {

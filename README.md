@@ -19,6 +19,8 @@ function makes this API being suitable for running discretly in production.
  - [x] Reimplement Stopwatch usign TraceHandler interface
  - [x] Tracing profiler decorator children are not decorated
  - [ ] Implement file (flat, csv, json, etc...) TraceHandler interface
+ - [ ] Allow configuration of formatter in stream handler.
+ - [ ] Implement store handler.
 
 # Usage
 
