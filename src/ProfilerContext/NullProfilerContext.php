@@ -68,5 +68,6 @@ final class NullProfilerContext implements ProfilerContext
      */
     public function flush(): iterable
     {
+        return [];
     }
 }

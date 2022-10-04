@@ -78,5 +78,6 @@ final class DefaultProfilerContext implements ProfilerContext
      */
     public function flush(): iterable
     {
+        return [];
     }
 }
