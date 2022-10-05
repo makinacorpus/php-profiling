@@ -18,9 +18,12 @@ function makes this API being suitable for running discretly in production.
  - [x] Reimplement Sentry using TraceHandler interface
  - [x] Reimplement Stopwatch usign TraceHandler interface
  - [x] Tracing profiler decorator children are not decorated
- - [ ] Implement file (flat, csv, json, etc...) TraceHandler interface
+ - [x] Implement file (flat, csv, json, etc...) TraceHandler interface
  - [ ] Allow configuration of formatter in stream handler.
- - [ ] Implement store handler.
+ - [x] Implement store handler.
+ - [x] Purge console command.
+ - [ ] Purge console command with date.
+ - [ ] View console command.
 
 # Usage
 

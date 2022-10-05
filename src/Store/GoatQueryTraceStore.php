@@ -6,6 +6,8 @@ namespace MakinaCorpus\Profiling\Store;
 
 use Goat\Driver\DriverFactory;
 use Goat\Driver\Error\TableDoesNotExistError;
+use Goat\Query\Query;
+use Goat\Query\Where;
 use Goat\Query\Expression\TableExpression;
 use Goat\Query\Expression\ValueExpression;
 use Goat\Runner\Runner;
@@ -124,5 +126,77 @@ class GoatQueryTraceStore implements TraceStore
         }
 
         $query->perform();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function clear(?\DateTimeInterface $until = null): void
+    {
+        $query = $this
+            ->getRunner()
+            ->getQueryBuilder()
+            ->delete($this->getTable())
+        ;
+
+        if ($until) {
+            $query->getWhere()->isLessOrEqual('created', $until);
+        }
+
+        $query->perform();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function query(): TraceQuery
+    {
+        return new class ($this->getRunner(), $this->getTable()) extends TraceQuery
+        {
+            private Runner $runner;
+            private TableExpression $table;
+
+            public function __construct(Runner $runner, TableExpression $table)
+            {
+                $this->runner = $runner;
+                $this->table = $table;
+            }
+
+            /**
+             * {@inheritdoc}
+             */
+            public function execute(): TraceQueryResult
+            {
+                $query = $this
+                    ->runner
+                    ->getQueryBuilder()
+                    ->select($this->table)
+                    ->columnExpression('*')
+                    ->range($this->limit, $this->offset)
+                ;
+
+                $where = $query->getWhere();
+                \assert($where instanceof Where);
+
+                if ($this->channels) {
+                    $where->expression("channels || ?", new ValueExpression($this->channels, 'text[]'));
+                }
+                if ($this->from) {
+                    $where->isGreaterOrEqual('created', $this->from);
+                }
+                if ($this->to) {
+                    $where->isLessOrEqual('created', $this->to);
+                }
+                if ($this->orderAsc) {
+                    $query->orderBy('created', Query::ORDER_ASC);
+                } else {
+                    $query->orderBy('created', Query::ORDER_DESC);
+                }
+
+                $result = $query->execute();
+
+                return new TraceQueryResult($result, $result->countRows());
+            }
+        };
     }
 }

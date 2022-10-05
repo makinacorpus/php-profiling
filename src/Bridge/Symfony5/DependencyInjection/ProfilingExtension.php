@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling\Bridge\Symfony5\DependencyInjection;
 
 use MakinaCorpus\Profiling\ProfilerContext;
+use MakinaCorpus\Profiling\Bridge\Symfony5\Command\StoreClearCommand;
 use MakinaCorpus\Profiling\Handler\SentryHandler;
 use MakinaCorpus\Profiling\Handler\StoreHandler;
 use MakinaCorpus\Profiling\Handler\StreamHandler;
@@ -15,11 +16,15 @@ use MakinaCorpus\Profiling\ProfilerContext\MemoryProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\NullProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\TracingProfilerContextDecorator;
 use MakinaCorpus\Profiling\Store\GoatQueryTraceStore;
+use MakinaCorpus\Profiling\Store\TraceStoreRegistry;
+use Sentry\State\HubInterface;
 use Symfony\Bundle\WebProfilerBundle\WebProfilerBundle;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\Stopwatch\Stopwatch;
@@ -64,6 +69,7 @@ final class ProfilingExtension extends Extension
         $container->setAlias(ProfilerContext::class, 'profiling.context.default');
 
         $this->configureHandlers($container, $config);
+        $this->registerCommands($container, $config);
     }
 
     private function parseMemoryString(string $value): int
@@ -86,8 +92,20 @@ final class ProfilingExtension extends Extension
         return (int) \round($value);
     }
 
+    private function registerCommands(ContainerBuilder $container, array $config)
+    {
+        if (\class_exists(Command::class)) {
+            $storeClearDefinition = new Definition();
+            $storeClearDefinition->setClass(StoreClearCommand::class);
+            $storeClearDefinition->setArguments([new Reference(TraceStoreRegistry::class)]);
+            $storeClearDefinition->addTag('console.command');
+            $container->setDefinition(StoreClearCommand::class, $storeClearDefinition);
+        }
+    }
+
     private function configureHandlers(ContainerBuilder $container, array $config)
     {
+        $storeNames = [];
         $handlerChannelMap = [];
         $handlerReferences = [];
 
@@ -151,6 +169,7 @@ final class ProfilingExtension extends Extension
                             $container->setDefinition($storeServiceId, $storeDefinition);
 
                             $definition->setArguments([new Reference($storeServiceId)]);
+                            $storeNames[$name] = new Reference($storeServiceId);
                             break;
 
                         default:
@@ -205,6 +224,7 @@ final class ProfilingExtension extends Extension
             $handlerReferences[$name] = new Reference($serviceId);
         }
 
+        // Do not register the main context if there are no handlers.
         if ($handlerReferences) {
             $tracingContextDecoratorDefinition = new Definition();
             $tracingContextDecoratorDefinition->setClass(TracingProfilerContextDecorator::class);
@@ -212,6 +232,13 @@ final class ProfilingExtension extends Extension
             $tracingContextDecoratorDefinition->setDecoratedService(ProfilerContext::class);
             $container->setDefinition(TracingProfilerContextDecorator::class, $tracingContextDecoratorDefinition);
         }
+
+        // Register store registry for commands.
+        $storeRegistryDefinition = new Definition();
+        $storeRegistryDefinition->setClass(ContainerTraceStoreRegistry::class);
+        $storeRegistryDefinition->setArguments([\array_keys($storeNames), ServiceLocatorTagPass::register($container, $storeNames)]);
+        $container->setDefinition(ContainerTraceStoreRegistry::class, $storeRegistryDefinition);
+        $container->setAlias(TraceStoreRegistry::class, ContainerTraceStoreRegistry::class);
     }
 
     /**
