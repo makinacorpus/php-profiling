@@ -36,6 +36,8 @@ final class ProfilingConfiguration implements ConfigurationInterface
                             ->scalarNode('path')->defaultNull()->end()
                             ->scalarNode('trigger')->defaultNull()->end()
                             ->scalarNode('type')->defaultNull()->end()
+                            // When type is "service" only.
+                            ->scalarNode('id')->defaultNull()->end()
                             // When type is "store" only.
                             ->scalarNode('store')->defaultNull()->end()
                             ->scalarNode('store_uri')->defaultNull()->end()

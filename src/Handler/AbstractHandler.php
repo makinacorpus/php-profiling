@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling\Handler;
 
 use MakinaCorpus\Profiling\ProfilerTrace;
-use MakinaCorpus\Profiling\TraceHandler;
 
-abstract class AbstractHandler implements TraceHandler
+abstract class AbstractHandler implements NamedTraceHandler
 {
+    private string $name = 'unnamed';
     private bool $hasThreshold = false;
     private ?int $memoryThreshold = null;
     private ?float $timeThreshold = null;
@@ -33,5 +33,21 @@ abstract class AbstractHandler implements TraceHandler
             (null !== $this->timeThreshold && $trace->getElapsedTime() >= $this->timeThreshold) ||
             (null !== $this->memoryThreshold && $trace->getMemoryUsage() >= $this->memoryThreshold)
         ;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getName(): string
+    {
+        return $this->name;
     }
 }

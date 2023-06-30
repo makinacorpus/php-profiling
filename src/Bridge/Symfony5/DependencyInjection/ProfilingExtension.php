@@ -6,10 +6,12 @@ namespace MakinaCorpus\Profiling\Bridge\Symfony5\DependencyInjection;
 
 use MakinaCorpus\Profiling\ProfilerContext;
 use MakinaCorpus\Profiling\Bridge\Symfony5\Command\StoreClearCommand;
+use MakinaCorpus\Profiling\Handler\NamedTraceHandler;
 use MakinaCorpus\Profiling\Handler\SentryHandler;
 use MakinaCorpus\Profiling\Handler\StoreHandler;
 use MakinaCorpus\Profiling\Handler\StreamHandler;
 use MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler;
+use MakinaCorpus\Profiling\Handler\TraceHandlerDecorator;
 use MakinaCorpus\Profiling\Handler\TriggerHandlerDecorator;
 use MakinaCorpus\Profiling\ProfilerContext\DefaultProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\MemoryProfilerContext;
@@ -17,7 +19,6 @@ use MakinaCorpus\Profiling\ProfilerContext\NullProfilerContext;
 use MakinaCorpus\Profiling\ProfilerContext\TracingProfilerContextDecorator;
 use MakinaCorpus\Profiling\Store\GoatQueryTraceStore;
 use MakinaCorpus\Profiling\Store\TraceStoreRegistry;
-use Sentry\State\HubInterface;
 use Symfony\Bundle\WebProfilerBundle\WebProfilerBundle;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -110,7 +111,6 @@ final class ProfilingExtension extends Extension
         $handlerReferences = [];
 
         foreach ($config['handlers'] ?? [] as $name => $options) {
-            $definition = new Definition();
             $serviceId = 'profiling.handler.' . $name;
 
             if (empty($options['type'])) {
@@ -123,6 +123,7 @@ final class ProfilingExtension extends Extension
             switch ($options['type']) {
 
                 case 'file':
+                    $definition = new Definition();
                     $definition->setClass(StreamHandler::class);
                     $filePermission = null;
                     if (isset($options['file_permission'])) {
@@ -136,16 +137,28 @@ final class ProfilingExtension extends Extension
 
                 case 'sentry':
                 case 'sentry4':
+                    $definition = new Definition();
                     $definition->setClass(SentryHandler::class);
                     $definition->setArguments([new Reference(HubInterface::class)]);
                     break;
 
+                case 'service':
+                    if (!isset($options['id'])) {
+                        throw new InvalidArgumentException(\sprintf("Handler '%s': option 'id' id required when type is 'service'.", $name));
+                    }
+                    $definition = new Definition();
+                    $definition->setClass(TraceHandlerDecorator::class);
+                    $definition->setArguments([new Reference($options['id'])]);
+                    break;
+
                 case 'stopwatch':
+                    $definition = new Definition();
                     $definition->setClass(SymfonyStopwatchHandler::class);
                     $definition->setArguments([new Reference(Stopwatch::class)]);
                     break;
 
                 case 'store':
+                    $definition = new Definition();
                     $definition->setClass(StoreHandler::class);
                     $storeServiceId = $serviceId . '.store';
 
@@ -179,6 +192,11 @@ final class ProfilingExtension extends Extension
 
                 default:
                     throw new InvalidArgumentException(\sprintf("Handler '%s': type '%s' is not supported.", $name, $options['type']));
+            }
+
+            $className = $definition->getClass();
+            if (\is_subclass_of($className, NamedTraceHandler::class)) {
+                $definition->addMethodCall('setName', [$name]);
             }
 
             if (isset($options['threshold'])) {
