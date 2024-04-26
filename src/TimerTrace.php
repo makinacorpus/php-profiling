@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling;
 
 /**
- * Represent an ended profiling trace.
+ * Represent an ended timer trace.
  */
 interface TimerTrace
 {

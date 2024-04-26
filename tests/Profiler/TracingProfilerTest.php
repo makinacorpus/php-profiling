@@ -17,7 +17,7 @@ final class TracingProfilerTest extends TestCase
         $handlerOther = new TestingTraceHandler();
 
         $profiler = new TracingProfilerDecorator(
-            new DefaultProfiler(),
+            new DefaultProfiler(true),
             [
                 'default' => $handlerDefault,
                 'other' => $handlerOther,
@@ -54,7 +54,7 @@ final class TracingProfilerTest extends TestCase
         $handlerOther = new TestingTraceHandler();
 
         $profiler = new TracingProfilerDecorator(
-            new DefaultProfiler(),
+            new DefaultProfiler(true),
             [
                 'default' => $handlerDefault,
                 'other' => $handlerOther,
@@ -83,7 +83,7 @@ final class TracingProfilerTest extends TestCase
         $handlerOther = new TestingTraceHandler();
 
         $profiler = new TracingProfilerDecorator(
-            new DefaultProfiler(),
+            new DefaultProfiler(true),
             [
                 'default' => $handlerDefault,
                 'other' => $handlerOther,
@@ -117,7 +117,7 @@ final class TracingProfilerTest extends TestCase
         $handlerOther = new TestingTraceHandler();
 
         $profiler = new TracingProfilerDecorator(
-            new DefaultProfiler(),
+            new DefaultProfiler(true),
             [
                 'default' => $handlerDefault,
                 'other' => $handlerOther,
@@ -149,7 +149,7 @@ final class TracingProfilerTest extends TestCase
         $handlerOther = new TestingTraceHandler();
 
         $profiler = new TracingProfilerDecorator(
-            new DefaultProfiler(),
+            new DefaultProfiler(true),
             [
                 'default' => $handlerDefault,
                 'other' => $handlerOther,

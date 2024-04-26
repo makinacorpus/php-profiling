@@ -1,14 +1,27 @@
 parameters:
-    env(PROMETHEUS_METRICS_ACCESS_TOKEN): ~
+    env(PROFILING_ENABLED): "1"
+    env(PROFILING_PROMOTHEUS_ENABLED): "0"
+    env(PROFILING_PROMETHEUS_ACCESS_TOKEN): ~
     profiling.prometheus.sample_logger.max_size: 100
     # New ones will be overriden by extension.
     profiling.prometheus.namespace: symfony
     profiling.prometheus.request_ignored_methods: ['OPTION']
 services:
+    # Profiler service: the instance you need to inject into your services.
+    profiling.profiler:
+        class: MakinaCorpus\Profiling\Profiler\DefaultProfiler
+        arguments: ["%env(bool:PROFILING_ENABLED)%", "%env(bool:PROFILING_PROMOTHEUS_ENABLED)%", "@profiling.prometheus.sample_logger"]
+        # Allow container to purge memory on terminate. This will also help
+        # when running long-running CLI commands, such as a message bus
+        # consumer.
+        tags: [{name: 'kernel.reset', method: 'exitContext'}]
+    MakinaCorpus\Profiling\Profiler:
+        alias: profiling.profiler
+
     # Controller for fetching metrics.
     profiling.prometheus.controller:
         class: MakinaCorpus\Profiling\Bridge\Symfony\Controller\PrometheusController
-        arguments: ['%env(resolve:PROMETHEUS_METRICS_ACCESS_TOKEN)%', '@profiling.prometheus.storage', '@profiling.prometheus.schema']
+        arguments: ['%env(resolve:PROFILING_PROMETHEUS_ACCESS_TOKEN)%', '@profiling.prometheus.storage', '@profiling.prometheus.schema']
         tags: ['controller.service_arguments']
 
     # Default sample schema, definitions are injected by extension/compiler.

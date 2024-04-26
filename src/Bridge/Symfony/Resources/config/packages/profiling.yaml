@@ -1,14 +1,22 @@
 #
 # Profiling configuration file, complete, will all default values.
 #
+# Profiling is enabled by default, this means that all timers you start are
+# kept in memory until it is flushed.
+#
+# Flusing happens either at:
+#   - kernel terminate event,
+#   - console terminate event,
+#   - post message bus consumption.
+#
+# Disabling profiling do not means timers won't work anymore, it just means
+# they won't be stored into memory, this is useful when you run long batches.
+#
+# In order to disable profiling, set this environement variable:
+#
+# PROFILING_ENABLED=0
+#
 profiling:
-    #
-    # Global kill switch, set this to false and profiling will be disabled
-    # forever. Please note there is the possibility of using environement
-    # variables to do a runtime soft-disable instead.
-    #
-    enabled: true
-
     #
     # Registered handlers for the TracingProfilerDecorator.
     #
@@ -84,9 +92,12 @@ profiling:
     # All examples values in this file are the defaults being applied if you
     # do not specify the values in your own configuration.
     #
+    # In order to enable prometheus metrics, set this into your environment
+    # variables:
+    #
+    # PROFILING_PROMOTHEUS_ENABLED=1
+    #
     prometheus:
-        enabled: true
-
         #
         # Namespace for your application.
         #

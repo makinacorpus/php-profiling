@@ -5,22 +5,20 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling\Tests\Timer;
 
 use MakinaCorpus\Profiling\Timer;
-use MakinaCorpus\Profiling\Timer\DefaultTimer;
-use MakinaCorpus\Profiling\Timer\NullTimer;
 use PHPUnit\Framework\TestCase;
 
-final class DefaultTimerTest extends TestCase
+final class TimerTest extends TestCase
 {
     public static function getTimers()
     {
-        yield [new DefaultTimer()];
+        yield [new Timer()];
     }
 
     public function testGetId(): void
     {
-        $timer1 = new DefaultTimer();
-        $timer2 = new DefaultTimer();
-        $timer3 = new DefaultTimer();
+        $timer1 = new Timer();
+        $timer2 = new Timer();
+        $timer3 = new Timer();
 
         self::assertNotEquals($timer1->getId(), $timer2->getName());
         self::assertNotEquals($timer1->getId(), $timer3->getName());
@@ -67,7 +65,7 @@ final class DefaultTimerTest extends TestCase
         self::assertGreaterThan(0, $usage1);
         self::assertGreaterThan($usage1, $usage2);
 
-        if (DefaultTimer::class === \get_class($timer)) {
+        if (Timer::class === \get_class($timer)) {
             // With decorators, this might be untrue since they mess up
             // with other components.
             self::assertSame($usage2, $usage3);
@@ -85,18 +83,6 @@ final class DefaultTimerTest extends TestCase
         self::assertTrue($child->isRunning());
 
         self::assertContains($child, $timer->getChildren());
-    }
-
-    /**
-     * @dataProvider getTimers
-     */
-    public function testStartReturnNullInstanceIfStopped(Timer $timer): void
-    {
-        $timer->execute();
-        $timer->stop();
-
-        $other = $timer->start();
-        self::assertInstanceOf(NullTimer::class, $other);
     }
 
     /**
@@ -168,7 +154,7 @@ final class DefaultTimerTest extends TestCase
      */
     public function testGetName(Timer $timer): void
     {
-        $timer = new DefaultTimer('foo');
+        $timer = new Timer('foo');
         self::assertSame('foo', $timer->getName());
     }
 

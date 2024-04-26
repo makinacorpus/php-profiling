@@ -37,6 +37,18 @@ return [
 ];
 ```
 
+Enable it by setting this environment variable:
+
+```env
+PROFILING_ENABLED=1
+```
+
+Enable prometheus support can be done as well:
+
+```env
+PROFILING_PROMOTHEUS_ENABLED=1
+```
+
 Then copy the `src/Bridge/Symfony/Resources/packages/profiling.yaml` in this
 package in the `config/packages/` directory. You may read it and modify
 following your needs. All configuration options are documented within the
@@ -52,7 +64,11 @@ Important notes:
  - By "incomming request", we mean a single workload, which in the context of
    a message bus consumer can be a single message processing.
 
-## Timer basic usage
+## Timers
+
+### Basic usage
+
+Here is a code sample:
 
 ```php
 use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
@@ -110,27 +126,50 @@ echo $timer22->getElapsedTime(); // 0.98897574
 $profiler->flush();
 ```
 
-## Timer advanced usage
+### Timer advanced usage
 
-There are many methods on the `\MakinaCorpus\Profiling\Timer` interface, all are documented.
+There are many methods on the `MakinaCorpus\Profiling\Timer` interface, all are documented.
+
+### Timer trace handlers
+
+Timer trace handlers are components that listen to all timers being emited,
+then can log information. A few handlers are provided by default:
+
+ - `MakinaCorpus\Profiling\Handler\SentryHandler` (`sentry`) can send your
+   timers to a Sentry instance.
+
+ - `MakinaCorpus\Profiling\Handler\StoreHandler` (`store`) can send your
+   timers to a local storage implementation. Only one implementation exist
+   as of now, which sends data to an SQL database table.
+
+ - `MakinaCorpus\Profiling\Handler\StreamHandler` (`file`) sends your
+   timers into a log file, each timer gets a line.
+
+ - `MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler` (`stopwatch`)
+   sends the timers into the `symfony/stopwatch` component. This is useful
+   when the web profiler debug toolbar is installed, in development mode.
+
+Handlers can be configured to accept timers from all channels, some channels,
+or all channels but some channels.
+
+See the example configuration file for more information about handler
+configuration.
 
 ## Prometheus metrics
 
 ### Setup
 
-First, enable it in your `config/packages/profiling.yaml` file:
+First, enable it using an environment variable:
 
-```yaml
-profiling:
-    prometheus:
-        enable: true
+```env
+PROFILING_PROMOTHEUS_ENABLED=1
 ```
 
 Then compute a random access token, with any method of your choice, then set
 it into your environments variables:
 
 ```env
-PROMETHEUS_METRICS_ACCESS_TOKEN: SuperSecretToken
+PROFILING_PROMETHEUS_ACCESS_TOKEN: SuperSecretToken
 ```
 
 In order to setup the prometheus HTTP endpoint, add into `config/routes.yaml`:
@@ -350,8 +389,8 @@ profiler onto a service is the following:
 ```php
 namespace MyVendor\MyApp\SomeNamespace;
 
-use MakinaCorpus\Profiling\Implementation\ProfilerAware;
-use MakinaCorpus\Profiling\Implementation\ProfilerAwareTrait;
+use MakinaCorpus\Profiling\ProfilerAware;
+use MakinaCorpus\Profiling\ProfilerAwareTrait;
 
 /**
  * Implementing the interface allow autoconfiguration.
@@ -362,7 +401,7 @@ class SomeService implements ProfilerAware
 }
 ```
 
-By using the `\MakinaCorpus\Profiling\Implementation\ProfilerAwareTrait`
+By using the `\MakinaCorpus\Profiling\ProfilerAwareTrait`
 you allow your code to be resilient in case of misinitialisation:
 
  - If the autoconfiguration failed, it will create a default null instance doing
@@ -376,8 +415,8 @@ You can then use the profiler:
 ```php
 namespace MyVendor\MyApp\SomeNamespace;
 
-use MakinaCorpus\Profiling\Implementation\ProfilerAware;
-use MakinaCorpus\Profiling\Implementation\ProfilerAwareTrait;
+use MakinaCorpus\Profiling\ProfilerAware;
+use MakinaCorpus\Profiling\ProfilerAwareTrait;
 
 /**
  * Implementing the interface allows autoconfiguration.

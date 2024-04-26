@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler\Formatter;
 
-use MakinaCorpus\Profiling\Timer\DefaultTimer;
+use MakinaCorpus\Profiling\Timer;
 use PHPUnit\Framework\TestCase;
 
 class PlainTextFormatterTest extends TestCase
@@ -13,7 +13,7 @@ class PlainTextFormatterTest extends TestCase
     {
         $formatter = new PlainTextFormatter();
 
-        $timer = new DefaultTimer("pouet");
+        $timer = new Timer("pouet");
         $timer->execute();
 
         self::assertMatchesRegularExpression(
@@ -47,7 +47,7 @@ class PlainTextFormatterTest extends TestCase
             TXT
         );
 
-        $timer = new DefaultTimer("pouet");
+        $timer = new Timer("pouet");
         $timer->execute();
 
         self::assertMatchesRegularExpression(
@@ -66,7 +66,7 @@ class PlainTextFormatterTest extends TestCase
     public function testCannotChangeAfterFormat(): void
     {
         $formatter = new PlainTextFormatter();
-        $formatter->format((new DefaultTimer())->execute());
+        $formatter->format((new Timer())->execute());
 
         self::expectException(\LogicException::class);
         $formatter->setFormat('pouet');

@@ -6,8 +6,6 @@ namespace MakinaCorpus\Profiling\Profiler;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\Timer;
-use MakinaCorpus\Profiling\Timer\DefaultTimer;
-use MakinaCorpus\Profiling\Timer\NullTimer;
 use MakinaCorpus\Profiling\TraceHandler;
 
 /**
@@ -129,12 +127,8 @@ final class TracingProfilerDecorator extends AbstractProfilerDecorator
     {
         $ret = $this->decorated->createTimer($name, $channels);
 
-        if ($ret instanceof NullTimer) {
+        if (!$this->decorated->isEnabled()) {
             return $ret;
-        }
-
-        if (!$ret instanceof DefaultTimer) {
-            throw new \LogicException(\sprintf("Timer must be an instanceof %s", DefaultTimer::class));
         }
 
         $handlers = $this->findHandlers($ret);

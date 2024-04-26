@@ -14,8 +14,6 @@ use MakinaCorpus\Profiling\Handler\TraceHandlerDecorator;
 use MakinaCorpus\Profiling\Handler\TriggerHandlerDecorator;
 use MakinaCorpus\Profiling\Matcher;
 use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
-use MakinaCorpus\Profiling\Profiler\NullProfiler;
 use MakinaCorpus\Profiling\Profiler\TracingProfilerDecorator;
 use MakinaCorpus\Profiling\Prometheus\Schema\ArraySchema;
 use MakinaCorpus\Profiling\Prometheus\Storage\QueryBuilderStorage;
@@ -43,39 +41,12 @@ final class ProfilingExtension extends Extension
         $configuration = $this->getConfiguration($configs, $container);
         $config = $this->processConfiguration($configuration, $configs);
 
-        // Configuration killswitch.
-        if (!$config['enabled']) {
-            $profiler = new Definition();
-            $profiler->setClass(NullProfiler::class);
-            $container->setDefinition(NullProfiler::class, $profiler);
-            $container->setAlias(Profiler::class, NullProfiler::class);
-            return;
-        }
-
         $loader = new YamlFileLoader($container, new FileLocator(\dirname(__DIR__).'/Resources/config'));
         $loader->load('services.yaml');
 
-        $container->setParameter('env(PROFILING_ENABLE)', "1");
-        $container->setParameter('profiling.enabled', "%env(bool:PROFILING_ENABLE)%");
-
-        $profiler = new Definition();
-        $profiler->setClass(DefaultProfiler::class);
-        $profiler->setArgument('$sampleLogger', new Reference('profiling.prometheus.sample_logger'));
-        $profiler->addMethodCall('toggle', [new Parameter('profiling.enabled')]);
-        // Allow container to purge memory on terminate. This will also help
-        // when running long-running CLI commands, such as a message bus
-        // consumer.
-        $profiler->addTag('kernel.reset', ['method' => 'exitContext']);
-        $container->setDefinition('profiling.profiler', $profiler);
-        $container->setAlias(Profiler::class, 'profiling.profiler');
-
         $this->configureHandlers($container, $config);
         $this->registerCommands($container, $config);
-
-        if ($config['prometheus']['enabled'] ?? false) {
-            $this->registerPrometheus($config['prometheus'] ?? [], $container);
-            $profiler->setArgument('$prometheusEnabled', true);
-        }
+        $this->registerPrometheus($config['prometheus'] ?? [], $container);
     }
 
     private function parseMemoryString(string $value): int

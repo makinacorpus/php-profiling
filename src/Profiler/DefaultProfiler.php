@@ -12,8 +12,6 @@ use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 use MakinaCorpus\Profiling\Timer;
-use MakinaCorpus\Profiling\Timer\DefaultTimer;
-use MakinaCorpus\Profiling\Timer\NullTimer;
 
 /**
  * Default implementation, stores information in memory and push it to
@@ -83,11 +81,13 @@ final class DefaultProfiler implements Profiler
     #[\Override]
     public function createTimer(?string $name = null, ?array $channels = null): Timer
     {
+        $timer = new Timer($name, null, $channels);
+
         if ($this->enabled) {
-            return $this->timers[] = new DefaultTimer($name, null, $channels);
-        } else {
-            return new NullTimer();
+            $this->timers[] = $timer;
         }
+
+        return $timer;
     }
 
     #[\Override]

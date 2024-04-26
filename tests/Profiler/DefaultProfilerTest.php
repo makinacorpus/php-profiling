@@ -22,7 +22,7 @@ final class DefaultProfilerTest extends TestCase
 
     public function testFlush(): void
     {
-        $profiler = new DefaultProfiler();
+        $profiler = new DefaultProfiler(true);
         $timer1 = $profiler->timer('one');
         $timer2 = $profiler->timer('two');
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling;
 
-use MakinaCorpus\Profiling\Profiler\NullProfiler;
+use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
 
 trait ProfilerAwareTrait /* implements ProfilerAware */
 {
@@ -23,7 +23,7 @@ trait ProfilerAwareTrait /* implements ProfilerAware */
      */
     protected function getProfiler(): Profiler
     {
-        return $this->profiler ??= new NullProfiler();
+        return $this->profiler ??= new DefaultProfiler();
     }
 
     /**

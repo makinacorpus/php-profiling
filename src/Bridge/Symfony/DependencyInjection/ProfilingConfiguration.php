@@ -20,10 +20,6 @@ final class ProfilingConfiguration implements ConfigurationInterface
         // @phpstan-ignore-next-line
         $rootNode
             ->children()
-                ->booleanNode('enabled')
-                    ->info("Global killswitch for disabling profiling, set this to false to completly disable profiling.")
-                    ->defaultTrue()
-                ->end()
                 ->arrayNode('handlers')
                     ->normalizeKeys(true)
                     ->prototype('array')
@@ -55,10 +51,6 @@ final class ProfilingConfiguration implements ConfigurationInterface
                 ->end()
                 ->arrayNode('prometheus')
                     ->children()
-                    ->booleanNode('enabled')
-                        ->info("Enable prometheus data collection and scrapping.")
-                        ->defaultTrue()
-                    ->end()
                     ->scalarNode('namespace')->defaultValue('symfony')->end()
                         ->variableNode('request_ignore_methods')->defaultValue(['OPTION'])->end()
                         ->variableNode('request_ignore_routes')->defaultValue([])->end()
