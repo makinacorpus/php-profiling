@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace MakinaCorpus\Profiling;
 
 /**
- * Used for profiler trace output.
+ * Used for timer trace output.
  *
- * All profiler traces that will go throught will have ended.
+ * All timer traces that will go throught will have ended.
  */
 interface TraceHandler
 {
@@ -17,14 +17,14 @@ interface TraceHandler
     public function setThreshold(?int $memoryThreshold, ?float $timeThreshold): void;
 
     /**
-     * Handler profiler start.
+     * Handler timer start.
      */
-    public function onStart(Profiler $profiler): void;
+    public function onStart(Timer $timer): void;
 
     /**
-     * Handle profiler stop.
+     * Handle timer stop.
      */
-    public function onStop(ProfilerTrace $trace): void;
+    public function onStop(TimerTrace $trace): void;
 
     /**
      * Flush any remaining buffer.

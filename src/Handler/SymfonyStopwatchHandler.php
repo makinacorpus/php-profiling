@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler;
 
-use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\ProfilerTrace;
+use MakinaCorpus\Profiling\Timer;
+use MakinaCorpus\Profiling\TimerTrace;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
@@ -21,26 +21,22 @@ class SymfonyStopwatchHandler extends AbstractHandler
         $this->stopwatch = $stopwatch;
     }
 
-    private function getTraceId(ProfilerTrace $trace): string
+    private function getTraceId(TimerTrace $trace): string
     {
         return $trace->getAbsoluteName() . '/' . $trace->getId();
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStart(Profiler $profiler): void
+    #[\Override]
+    public function onStart(Timer $timer): void
     {
-        $name = $this->getTraceId($profiler);
+        $name = $this->getTraceId($timer);
 
         $this->stopwatch->start($name);
         $this->started[$name] = true;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStop(ProfilerTrace $trace): void
+    #[\Override]
+    public function onStop(TimerTrace $trace): void
     {
         $name = $this->getTraceId($trace);
 
@@ -52,9 +48,7 @@ class SymfonyStopwatchHandler extends AbstractHandler
         unset($this->started[$name]);
     }
 
-    /**
-     * Flush any remaining buffer.
-     */
+    #[\Override]
     public function flush(): void
     {
         foreach ($this->started as $name => $enabled) {

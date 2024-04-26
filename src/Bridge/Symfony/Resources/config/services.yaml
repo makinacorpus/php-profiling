@@ -1,0 +1,48 @@
+parameters:
+    env(PROMETHEUS_METRICS_ACCESS_TOKEN): ~
+    profiling.prometheus.sample_logger.max_size: 100
+    # New ones will be overriden by extension.
+    profiling.prometheus.namespace: symfony
+    profiling.prometheus.request_ignored_methods: ['OPTION']
+services:
+    # Controller for fetching metrics.
+    profiling.prometheus.controller:
+        class: MakinaCorpus\Profiling\Bridge\Symfony\Controller\PrometheusController
+        arguments: ['%env(resolve:PROMETHEUS_METRICS_ACCESS_TOKEN)%', '@profiling.prometheus.storage', '@profiling.prometheus.schema']
+        tags: ['controller.service_arguments']
+
+    # Default sample schema, definitions are injected by extension/compiler.
+    profiling.prometheus.schema:
+        class: MakinaCorpus\Profiling\Prometheus\Schema\ArraySchema
+        arguments: ['%profiling.prometheus.namespace%', [], "%kernel.debug%"]
+
+    # Default sample storage, no storage, this needs to be configured.
+    profiling.prometheus.storage:
+        class: MakinaCorpus\Profiling\Prometheus\Storage\NullStorage
+
+    # Sample logger.
+    profiling.prometheus.sample_logger.self_flushing:
+        class: MakinaCorpus\Profiling\Prometheus\Logger\SelfFlushingSampleLogger
+        decorates: profiling.prometheus.sample_logger.default
+        arguments: ['@.inner', '%profiling.prometheus.sample_logger.max_size%']
+    profiling.prometheus.sample_logger.default:
+        class: MakinaCorpus\Profiling\Prometheus\Logger\MemorySampleLogger
+        arguments: ['@profiling.prometheus.schema', '@profiling.prometheus.storage']
+    profiling.prometheus.sample_logger:
+        alias: profiling.prometheus.sample_logger.default
+
+    # Listener, where the magic happens.
+    profiling.prometheus.matcher.console:
+        class: MakinaCorpus\Profiling\Matcher
+        arguments: ['']
+    profiling.prometheus.matcher.route:
+        class: MakinaCorpus\Profiling\Matcher
+        arguments: ['']
+    profiling.prometheus.event_subscriber.request:
+        class: MakinaCorpus\Profiling\Bridge\Symfony\EventSubscriber\PrometheusEventSubscriber
+        arguments:
+            - '@profiling.profiler'
+            - '@profiling.prometheus.matcher.console'
+            - '@profiling.prometheus.matcher.route'
+            - '%profiling.prometheus.request_ignored_methods%'
+        tags: ['kernel.event_subscriber']

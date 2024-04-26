@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler\Formatter;
 
-use MakinaCorpus\Profiling\ProfilerTrace;
 use MakinaCorpus\Profiling\Handler\Formatter;
 use MakinaCorpus\Profiling\Helper\Format;
 use MakinaCorpus\Profiling\Helper\WithPidTrait;
+use MakinaCorpus\Profiling\TimerTrace;
 
 /**
  * Available tokens are:
  *   - {pid}: current process identifier,
- *   - {id}: profiler trace unique identifier
- *   - {name}: profiler trace absolute name
- *   - {relname}: profiler trace relative name
+ *   - {id}: timer trace unique identifier
+ *   - {name}: timer trace absolute name
+ *   - {relname}: timer trace relative name
  *   - {timestr}: formatted time
  *   - {timems}: raw time in milliseconds as float
  *   - {timenano}: raw time in nanoseconds as float
@@ -40,10 +40,8 @@ class PlainTextFormatter implements Formatter
         $this->format = $format;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function format(ProfilerTrace $trace): string
+    #[\Override]
+    public function format(TimerTrace $trace): string
     {
         if (!$this->started) {
             $this->started = true;

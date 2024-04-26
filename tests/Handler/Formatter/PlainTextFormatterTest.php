@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler\Formatter;
 
-use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
+use MakinaCorpus\Profiling\Timer\DefaultTimer;
 use PHPUnit\Framework\TestCase;
 
 class PlainTextFormatterTest extends TestCase
@@ -13,19 +13,19 @@ class PlainTextFormatterTest extends TestCase
     {
         $formatter = new PlainTextFormatter();
 
-        $profiler = new DefaultProfiler("pouet");
-        $profiler->execute();
+        $timer = new DefaultTimer("pouet");
+        $timer->execute();
 
         self::assertMatchesRegularExpression(
             '/\[\d+\]\[[a-z0-9]+\] pouet: time: \d+.\d{3} ms memory: \d+(|.\d+) ([KMG]i|)B/',
-            $formatter->format($profiler)
+            $formatter->format($timer)
         );
 
-        $profiler->stop();
+        $timer->stop();
 
         self::assertMatchesRegularExpression(
             '/\[\d+\]\[[a-z0-9]+\] pouet: time: \d+.\d{3} ms memory: \d+(|.\d+) ([KMG]i|)B/',
-            $formatter->format($profiler)
+            $formatter->format($timer)
         );
     }
 
@@ -35,9 +35,9 @@ class PlainTextFormatterTest extends TestCase
         $formatter->setFormat(<<<TXT
              Values:
                - {pid}: current process identifier,
-               - {id}: profiler trace unique identifier
-               - {name}: profiler trace absolute name
-               - {relname}: profiler trace relative name
+               - {id}: timer trace unique identifier
+               - {name}: timer trace absolute name
+               - {relname}: timer trace relative name
                - {timestr}: formatted time
                - {timems}: raw time in milliseconds as float
                - {timenano}: raw time in nanoseconds as float
@@ -47,26 +47,26 @@ class PlainTextFormatterTest extends TestCase
             TXT
         );
 
-        $profiler = new DefaultProfiler("pouet");
-        $profiler->execute();
+        $timer = new DefaultTimer("pouet");
+        $timer->execute();
 
         self::assertMatchesRegularExpression(
             '/Values:\n.*/',
-            $formatter->format($profiler)
+            $formatter->format($timer)
         );
 
-        $profiler->stop();
+        $timer->stop();
 
         self::assertMatchesRegularExpression(
             '/Values:\n.*/',
-            $formatter->format($profiler)
+            $formatter->format($timer)
         );
     }
 
     public function testCannotChangeAfterFormat(): void
     {
         $formatter = new PlainTextFormatter();
-        $formatter->format((new DefaultProfiler())->execute());
+        $formatter->format((new DefaultTimer())->execute());
 
         self::expectException(\LogicException::class);
         $formatter->setFormat('pouet');

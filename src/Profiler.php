@@ -4,72 +4,82 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling;
 
-interface Profiler extends ProfilerTrace
+use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
+use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
+
+interface Profiler
 {
     /**
-     * Add on start callback.
+     * Create a timer in this profiler, do not start it..
      *
-     * @param callable $callback
-     *   Takes on argument, a Profiler instance, return is ignored.
-     *
-     * @return $this
-     */
-    public function addStartCallback(callable $callback): Profiler;
-
-    /**
-     * Add on stop callback.
-     *
-     * @param callable $callback
-     *   Takes on argument, a Profiler instance, return is ignored.
-     *
-     * @return $this
-     */
-    public function addStopCallback(callable $callback): Profiler;
-
-    /**
-     * Start timer.
-     *
-     * @return $this
-     */
-    public function execute(): Profiler;
-
-    /**
-     * Create and start new child profiler.
-     *
-     * All on start and stop callbacks are propagated to children.
-     *
-     * In case the current context or profiler was closed or flushed, this
+     * In case the current profiler or timer was closed or flushed, this
      * will return a null instance.
      */
-    public function start(?string $name = null): Profiler;
+    public function createTimer(?string $name = null, ?array $channels = null): Timer;
 
     /**
-     * End current timer or child timer, and return elasped time, in milliseconds.
+     * Start new timer in this profiler, start it.
      *
-     * When a single timer ends, it ends all children.
-     *
-     * If timer was already closed, this should remain silent and do nothing.
+     * In case the current profiler or timer was closed or flushed, this
+     * will return a null instance.
      */
-    public function stop(?string $name = null): void;
+    public function timer(?string $name = null, ?array $channels = null): Timer;
 
     /**
-     * Is this profiler still running.
+     * Enable or disable profiling.
+     *
+     * It won't shut down currently running timers, it will just prevent
+     * new timers creation.
      */
-    public function isRunning(): bool;
+    public function toggle(bool $enabled): void;
 
     /**
-     * Set profiler description.
+     * Global killswitch. Tell if profiling is enabled at all.
      *
-     * Description is a purely informational human readable string.
+     * If disabled, all timers will be null instances, no storage will be done.
      */
-    public function setDescription(string $description): void;
+    public function isEnabled(): bool;
 
     /**
-     * Set arbitrary attribute.
+     * Prometheus killswitch. Tell if sample metrics are enabled.
      *
-     * @param mixed $value
-     *   Any value. You are discouraged from using attributes too much as it
-     *   will grow the memory consumption.
+     * If disabled, samples will be null instances, no storage will be done.
      */
-    public function setAttribute(string $name, $value): void;
+    public function isPrometheusEnabled(): bool;
+
+    /**
+     * Enter new execution context.
+     */
+    public function enterContext(ContextInfo $context, bool $enablePrometheus = false): void;
+
+    /**
+     * Get current execution context.
+     */
+    public function getContext(): ContextInfo;
+
+    /**
+     * Exit current execution context and flush.
+     */
+    public function exitContext(): void;
+
+    /**
+     * Increment a prometheus counter sample.
+     */
+    public function counter(string $name, array $labelValues, ?int $value = null): Counter;
+
+    /**
+     * Set a prometheus gauge sample value.
+     */
+    public function gauge(string $name, array $labelValues, ?float $value = null): Gauge;
+
+    /**
+     * Set one or more prometheus summary sample values.
+     */
+    public function summary(string $name, array $labelValues, float ...$values): Summary;
+
+    /**
+     * Manually flush (stop all timers, send sample data to storage).
+     */
+    public function flush(): void;
 }

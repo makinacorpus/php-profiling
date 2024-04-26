@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler;
 
-use MakinaCorpus\Profiling\ProfilerTrace;
+use MakinaCorpus\Profiling\TimerTrace;
 
 interface Formatter
 {
     /**
-     * Format profiler trace for output.
+     * Format timer trace for output.
      */
-    public function format(ProfilerTrace $trace): string;
+    public function format(TimerTrace $trace): string;
 }

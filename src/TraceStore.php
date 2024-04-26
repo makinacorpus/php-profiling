@@ -17,7 +17,7 @@ interface TraceStore
     /**
      * Store trace information.
      */
-    public function store(ProfilerTrace ...$traces): void;
+    public function store(TimerTrace ...$traces): void;
 
     /**
      * Delete all traces.

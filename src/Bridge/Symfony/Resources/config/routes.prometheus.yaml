@@ -1,0 +1,4 @@
+prometheus_metrics:
+    path: /metrics
+    controller: profiling.prometheus.controller::metrics
+    methods: ['GET']

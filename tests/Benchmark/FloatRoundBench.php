@@ -21,6 +21,7 @@ class FloatRoundBench
      */
     public function benchRound()
     {
+        // @phpstan-ignore-next-line
         \round($this->number, 3);
     }
 
@@ -29,6 +30,7 @@ class FloatRoundBench
      */
     public function benchNumberFormat()
     {
+        // @phpstan-ignore-next-line
         \number_format($this->number, 3);
     }
 
@@ -37,6 +39,7 @@ class FloatRoundBench
      */
     public function benchSprintf()
     {
+        // @phpstan-ignore-next-line
         \sprintf("%.3F", $this->number);
     }
 }

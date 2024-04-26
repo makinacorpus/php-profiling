@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler;
 
-use MakinaCorpus\Profiling\ProfilerTrace;
 use MakinaCorpus\Profiling\Handler\Formatter\PlainTextFormatter;
+use MakinaCorpus\Profiling\TimerTrace;
 
 abstract class AbstractFormatterHandler extends AbstractHandler
 {
@@ -21,9 +21,9 @@ abstract class AbstractFormatterHandler extends AbstractHandler
     }
 
     /**
-     * Format profiler trace.
+     * Format timer trace.
      */
-    protected function format(ProfilerTrace $trace): string
+    protected function format(TimerTrace $trace): string
     {
         if (!$this->started) {
             $this->started = true;

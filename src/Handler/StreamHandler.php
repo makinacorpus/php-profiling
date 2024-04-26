@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler;
 
-use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\ProfilerTrace;
+use MakinaCorpus\Profiling\Timer;
+use MakinaCorpus\Profiling\TimerTrace;
 
 class StreamHandler extends AbstractFormatterHandler
 {
@@ -30,26 +30,20 @@ class StreamHandler extends AbstractFormatterHandler
         $this->useLocking = $useLocking;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStart(Profiler $profiler): void
+    #[\Override]
+    public function onStart(Timer $timer): void
     {
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStop(ProfilerTrace $trace): void
+    #[\Override]
+    public function onStop(TimerTrace $trace): void
     {
         if ($this->shouldLog($trace)) {
             $this->write($this->format($trace));
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function flush(): void
     {
         if (\is_resource($this->stream)) {
@@ -58,7 +52,7 @@ class StreamHandler extends AbstractFormatterHandler
     }
 
     /**
-     * {@inheritDoc}
+     * Close resource.
      */
     public function close(): void
     {
@@ -91,7 +85,7 @@ class StreamHandler extends AbstractFormatterHandler
     }
 
     /**
-     * {@inheritDoc}
+     * Write ligne.
      */
     protected function write(string $string): void
     {

@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler;
 
-use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\ProfilerTrace;
+use MakinaCorpus\Profiling\Timer;
+use MakinaCorpus\Profiling\TimerTrace;
 use MakinaCorpus\Profiling\TraceStore;
 
-/**
- * Composer require sentry/sentry:^3.8
- */
 class StoreHandler extends AbstractHandler
 {
     private TraceStore $store;
@@ -23,17 +20,13 @@ class StoreHandler extends AbstractHandler
         $this->direct = $direct;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStart(Profiler $profiler): void
+    #[\Override]
+    public function onStart(Timer $timer): void
     {
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStop(ProfilerTrace $trace): void
+    #[\Override]
+    public function onStop(TimerTrace $trace): void
     {
         if (!$this->shouldLog($trace)) {
             return;
@@ -46,9 +39,7 @@ class StoreHandler extends AbstractHandler
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function flush(): void
     {
         $traces = $this->buffer;

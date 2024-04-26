@@ -1,0 +1,64 @@
+#
+# Default schema, serves as an example.
+#
+# All entries from this file will be automatically registered, whether or not
+# you define your own in your config/packages/profiling.yaml file.
+#
+profiling:
+    prometheus:
+        schema:
+            instance_name:
+                type: gauge
+                help: instance name
+            http_request_total:
+                type: counter
+                help: total request count
+                labels: [action, method]
+            http_exception_total:
+                type: counter
+                help: total request exception count
+                labels: [action, method, type]
+            http_request_duration_msec:
+                type: summary
+                help: request durations in milliseconds
+                labels: [action, method, status]
+            http_memory_consuption:
+                type: summary
+                help: request peak memory consumption in bytes
+                labels: [action, method, status]
+            http_response_total:
+                type: counter
+                help: total response count
+                labels: [action, method, status]
+            message_consumed_total:
+                type: counter
+                help: total consumed message count
+                labels: [action, method]
+            message_exception_total:
+                type: counter
+                help: total message exception count
+                labels: [action, method, type]
+            message_duration_msec:
+                type: summary
+                help: message durations in milliseconds
+                labels: [action, method]
+            console_command_total:
+                type: counter
+                help: total console command count
+                labels: [action, method]
+            console_exception_total:
+                type: counter
+                help: total console exception count
+                labels: [action, method, type]
+            console_duration_msec:
+                type: summary
+                help: console command durations in milliseconds
+                labels: [action, method, status]
+            coinsole_memory_consuption:
+                type: summary
+                help: console peak memory consumption in bytes
+                labels: [action, method, status]
+            console_status_total:
+                type: counter
+                help: total response count
+                labels: [action, method, status]

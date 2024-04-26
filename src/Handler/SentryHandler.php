@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler;
 
-use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\ProfilerTrace;
-use MakinaCorpus\Profiling\TraceHandler;
+use MakinaCorpus\Profiling\Timer;
+use MakinaCorpus\Profiling\TimerTrace;
 use Sentry\State\HubInterface;
 use Sentry\Tracing\Span;
 use Sentry\Tracing\SpanContext;
@@ -17,7 +16,7 @@ use Sentry\Tracing\SpanContext;
 class SentryHandler extends AbstractHandler
 {
     private HubInterface $hub;
-    /** @param Span */
+    /** @var Span[] */
     private array $spans = [];
 
     public function __construct(HubInterface $hub)
@@ -25,10 +24,8 @@ class SentryHandler extends AbstractHandler
         $this->hub = $hub;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStart(Profiler $profiler): void
+    #[\Override]
+    public function onStart(Timer $timer): void
     {
         $transaction = $this->hub->getTransaction();
 
@@ -37,15 +34,13 @@ class SentryHandler extends AbstractHandler
         }
 
         $spanContext = new SpanContext();
-        $spanContext->setOp($profiler->getAbsoluteName());
+        $spanContext->setOp($timer->getAbsoluteName());
 
-        $this->spans[$profiler->getId()] = $transaction->startChild($spanContext);
+        $this->spans[$timer->getId()] = $transaction->startChild($spanContext);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStop(ProfilerTrace $trace): void
+    #[\Override]
+    public function onStop(TimerTrace $trace): void
     { 
         $id = $trace->getId();
 
@@ -64,17 +59,12 @@ class SentryHandler extends AbstractHandler
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function flush(): void
     {
         foreach ($this->spans as $span) {
-            if ($span) {
-                \assert($span instanceof Span);
-
-                $span->finish();
-            }
+            \assert($span instanceof Span);
+            $span->finish();
         }
 
         $this->spans = [];

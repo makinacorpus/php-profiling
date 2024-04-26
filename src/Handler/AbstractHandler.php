@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler;
 
-use MakinaCorpus\Profiling\ProfilerTrace;
+use MakinaCorpus\Profiling\TimerTrace;
 
 abstract class AbstractHandler implements NamedTraceHandler
 {
@@ -13,9 +13,7 @@ abstract class AbstractHandler implements NamedTraceHandler
     private ?int $memoryThreshold = null;
     private ?float $timeThreshold = null;
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function setThreshold(?int $memoryThreshold, ?float $timeThreshold): void
     {
         $this->hasThreshold = true;
@@ -26,7 +24,7 @@ abstract class AbstractHandler implements NamedTraceHandler
     /**
      * Should the given trace be logged or dumped.
      */
-    protected function shouldLog(ProfilerTrace $trace): bool
+    protected function shouldLog(TimerTrace $trace): bool
     {
         return
             (!$this->hasThreshold) ||
@@ -35,17 +33,13 @@ abstract class AbstractHandler implements NamedTraceHandler
         ;
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function setName(string $name): void
     {
         $this->name = $name;
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function getName(): string
     {
         return $this->name;

@@ -11,17 +11,13 @@ class StreamHandlerTest extends AbstractHandlerTest
 {
     protected ?string $fileUrl = null;
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     protected function setUp(): void
     {
         $this->fileUrl = \sys_get_temp_dir() . '/profiling/' . \uniqid() . '/trace-' . \uniqid();
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     protected function tearDown(): void
     {
         if ($this->fileUrl) {
@@ -38,6 +34,7 @@ class StreamHandlerTest extends AbstractHandlerTest
         }
     }
 
+    #[\Override]
     protected function createHandler(): TraceHandler
     {
         return new StreamHandler($this->fileUrl);

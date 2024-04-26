@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Tests\Handler;
 
+use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
 use MakinaCorpus\Profiling\TraceHandler;
-use MakinaCorpus\Profiling\ProfilerContext\MemoryProfilerContext;
 use PHPUnit\Framework\TestCase;
 
 abstract class AbstractHandlerTest extends TestCase
@@ -16,11 +16,11 @@ abstract class AbstractHandlerTest extends TestCase
     {
         $handler = $this->createHandler();
 
-        $profiler = (new MemoryProfilerContext())->start('foo'); 
+        $timer = (new DefaultProfiler())->timer('foo'); 
 
-        $handler->onStart($profiler);
-        $profiler->stop();
-        $handler->onStop($profiler);
+        $handler->onStart($timer);
+        $timer->stop();
+        $handler->onStop($timer);
 
         // self::expectNotToPerformAssertions() disable coverage.
         self::assertTrue(true);
@@ -30,14 +30,14 @@ abstract class AbstractHandlerTest extends TestCase
     {
         $handler = $this->createHandler();
 
-        $profiler = (new MemoryProfilerContext())->start('foo'); 
+        $timer = (new DefaultProfiler())->timer('foo'); 
 
-        $handler->onStart($profiler);
-        $profiler->stop();
-        $handler->onStop($profiler);
+        $handler->onStart($timer);
+        $timer->stop();
+        $handler->onStop($timer);
 
-        $profiler->stop();
-        $handler->onStop($profiler);
+        $timer->stop();
+        $handler->onStop($timer);
 
         // self::expectNotToPerformAssertions() disable coverage.
         self::assertTrue(true);
@@ -47,9 +47,9 @@ abstract class AbstractHandlerTest extends TestCase
     {
         $handler = $this->createHandler();
 
-        $profiler = (new MemoryProfilerContext())->start('foo'); 
+        $timer = (new DefaultProfiler())->timer('foo'); 
 
-        $handler->onStart($profiler);
+        $handler->onStart($timer);
         $handler->flush();
 
         // self::expectNotToPerformAssertions() disable coverage.
@@ -60,13 +60,13 @@ abstract class AbstractHandlerTest extends TestCase
     {
         $handler = $this->createHandler();
 
-        $profiler = (new MemoryProfilerContext())->start('foo'); 
+        $timer = (new DefaultProfiler())->timer('foo'); 
 
-        $handler->onStart($profiler);
-        $profiler->stop();
-        $handler->onStop($profiler);
+        $handler->onStart($timer);
+        $timer->stop();
+        $handler->onStop($timer);
 
-        $profiler->stop();
+        $timer->stop();
 
         // self::expectNotToPerformAssertions() disable coverage.
         self::assertTrue(true);
@@ -76,10 +76,10 @@ abstract class AbstractHandlerTest extends TestCase
     {
         $handler = $this->createHandler();
 
-        $profiler = (new MemoryProfilerContext())->start('foo'); 
+        $timer = (new DefaultProfiler())->timer('foo'); 
 
-        $profiler->stop();
-        $handler->onStop($profiler);
+        $timer->stop();
+        $handler->onStop($timer);
 
         // self::expectNotToPerformAssertions() disable coverage.
         self::assertTrue(true);

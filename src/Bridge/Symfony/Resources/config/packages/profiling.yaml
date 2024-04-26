@@ -1,0 +1,144 @@
+#
+# Profiling configuration file, complete, will all default values.
+#
+profiling:
+    #
+    # Global kill switch, set this to false and profiling will be disabled
+    # forever. Please note there is the possibility of using environement
+    # variables to do a runtime soft-disable instead.
+    #
+    enabled: true
+
+    #
+    # Registered handlers for the TracingProfilerDecorator.
+    #
+    # Each handlers has a chance to react upon profiler close and do something
+    # with it.
+    #
+    # Keys in this array are arbitrary user given names, they won't alter any
+    # functions of this API.
+    #
+    # You can set the "channels" option on each item configured here, this will
+    # dispatch profilers into various loggers depending on their configured
+    # channel. Channel is set either:
+    #   - at the Timer instance entry, using the "channel" tag.
+    #   - at the ProfilerAware implementation, using a compiler pass.
+    # The given array is a list of arbitrary names, each one can be prefixed
+    # using ! case in which this channel will be blacklisted.
+    # You cannot mix whitelist and blacklist.
+    # If nothing provided, all channels will go throught. 
+    #
+    handlers:
+        file_default:
+            type: file
+            path: "%kernel.logs_dir%/%kernel.environment%-profiling.trace"
+            date_format: Y-m-d
+            channels: ["!sql"]
+            threshold:
+                # If no suffix provided, this is a number of bytes, otherwise
+                # it will be parsed like PHP ini file memory values.
+                memory: 2M
+            trigger: ~
+
+        file_sql:
+            type: file
+            path: "%kernel.logs_dir%/%kernel.environment%-profiling-sql.trace"
+            date_format: Y-m-d
+            channels: ["sql"]
+            threshold:
+                # Time threshold will always be millesconds.
+                # You set a float there, such as 1.25 for example.
+                time: 100
+            trigger: ~
+
+        #
+        # This example is a "slow query log" feature.
+        #
+        # An example that will store everything into a databse table. You can
+        # use all other options. "type" is optional when "store" is set.
+        #
+        # "store_table" is optional, default table name is "profiling_trace".
+        # You could use "%env(resolve:DATABASE_URL)%" for database URI.
+        #
+        slow_query_log:
+            store: query-builder
+            store_uri: pgsql://foo:bar@example.com/database
+            store_table: slow_query_log
+            channels: ["sql"]
+            threshold:
+                time: 100
+
+        # Sentry does not support threshold.
+        sentry:
+            type: sentry4
+
+        # Stopwatch does not support threshold.
+        stopwatch:
+            type: stopwatch
+
+    #
+    # Prometheus specific options.
+    #
+    # Per default, prometheus metrics are disabled.
+    #
+    # All examples values in this file are the defaults being applied if you
+    # do not specify the values in your own configuration.
+    #
+    prometheus:
+        enabled: true
+
+        #
+        # Namespace for your application.
+        #
+        namespace: symfony
+
+        #
+        # HTTP methods to ignore.
+        #
+        request_ignore_methods: ["OPTION"]
+
+        #
+        # Router routes to ignore.
+        #
+        # You can use glob-like syntax here to match more than the simple string.
+        #
+        # Only "*" and "?" are interpreted in glob pattern.
+        #
+        request_ignore_routes: ['_profiler*', '_wdt']
+
+        #
+        # Console command prefixes to ignore.
+        #
+        # You can use glob-like syntax here to match more than the simple string
+        # but in all cases, if the string ends with ':' a wildcard is implied at
+        # the end, otherwise it's an exact match.
+        #
+        # Only "*" and "?" are interpreted in glob pattern.
+        #
+        console_ignore: ['assets:', 'cache:', 'config:', 'debug:', 'doctrine:', 'maker:', 'secrets:', 'security:', 'translation:']
+
+        #
+        # Driver storage options.
+        #
+        # Options you can pass in the URI string will depend upon each
+        # storage implementation. Please refer to package documentation.
+        #
+        storage:
+            type: query_builder
+            uri: "%env(resolve:DATABASE_URL)%"
+            options:
+                table: "public.prometheus_metrics"
+
+        #
+        # Schema configuration.
+        #
+        # All samples collected must appear in this schema, they will be
+        # validated prior being stored, and ignored if validation fails.
+        #
+        # Default schema will be registered by reading entries within the
+        # "profiling.prometheus.schema.yaml" file. You are not allowed to
+        # override samples defined in this file.
+        #
+        # You can add as many entries as you wish.
+        #
+        schema: {}

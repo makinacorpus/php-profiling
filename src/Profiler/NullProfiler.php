@@ -4,179 +4,84 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Profiler;
 
+use MakinaCorpus\Profiling\ContextInfo;
 use MakinaCorpus\Profiling\Profiler;
+use MakinaCorpus\Profiling\Timer;
+use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
+use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
+use MakinaCorpus\Profiling\Timer\NullTimer;
 
 /**
  * @codeCoverageIgnore
  */
 final class NullProfiler implements Profiler
 {
-    public function __construct(?string $name = null, ?Profiler $parent = null)
+    #[\Override]
+    public function createTimer(?string $name = null, ?array $channels = null): Timer
+    {
+        return new NullTimer();
+    }
+
+    #[\Override]
+    public function timer(?string $name = null, ?array $channels = null): Timer
+    {
+        return new NullTimer();
+    }
+
+    #[\Override]
+    public function toggle(bool $enabled): void
     {
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function addStartCallback(callable $callback): Profiler
-    {
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function addStopCallback(callable $callback): Profiler
-    {
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function execute(): Profiler
-    {
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function start(?string $name = null): Profiler
-    {
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function stop(?string $name = null): void
-    {
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isRunning(): bool
+    #[\Override]
+    public function isEnabled(): bool
     {
         return false;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getMemoryUsageStart(): int
+    #[\Override]
+    public function isPrometheusEnabled(): bool
     {
-        return 0;
+        return false;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getMemoryUsage(): int
-    {
-        return 0;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getRelativeStartTime(): float
-    {
-        return 0.0;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getAbsoluteStartTime(): float
-    {
-        return 0.0;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getElapsedTime(): float
-    {
-        return 0.0;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getElapsedTimeNano(): float
-    {
-        return 0.0;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getId(): string
-    {
-        return '(null)';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getName(): string
-    {
-        return '(null)';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getAbsoluteName(): string
-    {
-        return '(null)';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getChildren(): iterable
-    {
-        return [];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setDescription(string $description): void
+    #[\Override]
+    public function enterContext(ContextInfo $context, bool $enablePrometheus = false): void
     {
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getDescription(): ?string
+    #[\Override]
+    public function getContext(): ContextInfo
     {
-        return null;
+        return ContextInfo::null();
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getChannels(): array
-    {
-        return [];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setAttribute(string $name, $value): void
+    #[\Override]
+    public function exitContext(): void
     {
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getAttributes(): array
+    #[\Override]
+    public function counter(string $name, array $labelValues, ?int $value = null): Counter
     {
-        return [];
+        return new Counter('null', [], []);
+    }
+
+    #[\Override]
+    public function gauge(string $name, array $labelValues, ?float $value = null): Gauge
+    {
+        return new Gauge('null', [], []);
+    }
+
+    #[\Override]
+    public function summary(string $name, array $labelValues, float ...$values): Summary
+    {
+        return new Summary('null', [], []);
+    }
+
+    #[\Override]
+    public function flush(): void
+    {
     }
 }

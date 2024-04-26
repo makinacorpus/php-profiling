@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler\Formatter;
 
-use MakinaCorpus\Profiling\ProfilerTrace;
 use MakinaCorpus\Profiling\Handler\Formatter;
 use MakinaCorpus\Profiling\Helper\WithPidTrait;
+use MakinaCorpus\Profiling\TimerTrace;
 
 class JsonFormatter implements Formatter
 {
@@ -14,10 +14,8 @@ class JsonFormatter implements Formatter
 
     private bool $started = false;
 
-    /**
-     * {@inheritdoc}
-     */
-    public function format(ProfilerTrace $trace): string
+    #[\Override]
+    public function format(TimerTrace $trace): string
     {
         if (!$this->started) {
             $this->started = true;

@@ -14,6 +14,7 @@ class GenerateRandomIdBench
      */
     public function benchBin2HexRandomBytes()
     {
+        // @phpstan-ignore-next-line
         \bin2hex(\random_bytes(4));
     }
 
@@ -71,6 +72,7 @@ class GenerateRandomIdBench
         for ($i = 0; $i < 7; ++$i) {
             $foo[$i] = \chr(\rand(0, 1) ? \rand(48, 57) : \rand(97, 122));
         }
+        // @phpstan-ignore-next-line
         \implode('', $foo);
     }
 }

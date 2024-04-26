@@ -10,6 +10,7 @@ use Sentry\State\Hub;
 
 class SentryHandlerTest extends AbstractHandlerTest
 {
+    #[\Override]
     protected function createHandler(): TraceHandler
     {
         return new SentryHandler(

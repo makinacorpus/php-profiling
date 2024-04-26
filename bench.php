@@ -1,12 +1,12 @@
 <?php
 
+use MakinaCorpus\Profiling\Handler\Formatter\JsonFormatter;
 use MakinaCorpus\Profiling\Handler\StreamHandler;
 use MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler;
-use MakinaCorpus\Profiling\Handler\Formatter\JsonFormatter;
-use MakinaCorpus\Profiling\ProfilerContext\DispatchProfilerContextDecorator;
-use MakinaCorpus\Profiling\ProfilerContext\MemoryProfilerContext;
-use MakinaCorpus\Profiling\ProfilerContext\TracingProfilerContextDecorator;
-use MakinaCorpus\Profiling\Tests\ProfilerContext\TestingTraceHandler;
+use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
+use MakinaCorpus\Profiling\Profiler\DispatchProfilerDecorator;
+use MakinaCorpus\Profiling\Profiler\TracingProfilerDecorator;
+use MakinaCorpus\Profiling\Tests\Profiler\TestingTraceHandler;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 require_once __DIR__ . '/vendor/autoload.php';
@@ -22,9 +22,9 @@ $plainTextFormatter = new StreamHandler(sys_get_temp_dir() . '/profiling.txt');
 $jsonTextFormatter = new StreamHandler(sys_get_temp_dir() . '/profiling.json');
 $jsonTextFormatter->setFormatter(new JsonFormatter());
 
-$context = new DispatchProfilerContextDecorator(
-    new TracingProfilerContextDecorator(
-        new MemoryProfilerContext(),
+$context = new DispatchProfilerDecorator(
+    new TracingProfilerDecorator(
+        new DefaultProfiler(),
         [
             'default' => new TestingTraceHandler(),
             'other' => new SymfonyStopwatchHandler(
@@ -43,7 +43,7 @@ $context = new DispatchProfilerContextDecorator(
 
 $start = microtime(true);
 for ($i = 0; $i < 1000; ++$i) {
-    $profiler = $context->create('foo');
+    $profiler = $context->createTimer('foo');
     $child1 = $profiler->start('fizz');
     $child2 = $profiler->start('bla');
 

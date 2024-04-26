@@ -15,17 +15,13 @@ class TraceQueryResult implements \Countable, \IteratorAggregate
         $this->count = $count;
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function count(): int
     {
         return $this->count;
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function getIterator(): \Iterator
     {
         return (fn () => yield from $this->values)();

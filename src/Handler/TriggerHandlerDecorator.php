@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler;
 
-use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\ProfilerTrace;
+use MakinaCorpus\Profiling\Timer;
+use MakinaCorpus\Profiling\TimerTrace;
 use MakinaCorpus\Profiling\TraceHandler;
 
 /**
@@ -14,7 +14,7 @@ use MakinaCorpus\Profiling\TraceHandler;
 class TriggerHandlerDecorator implements TraceHandler
 {
     private TraceHandler $decorated;
-    private string $triggerName;
+    private string $triggerName; // @phpstan-ignore-line
 
     public function __construct(TraceHandler $decorated, string $triggerName)
     {
@@ -30,37 +30,29 @@ class TriggerHandlerDecorator implements TraceHandler
         return true;
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function setThreshold(?int $memoryThreshold, ?float $timeThreshold): void
     {
         $this->decorated->setThreshold($memoryThreshold, $timeThreshold);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStart(Profiler $profiler): void
+    #[\Override]
+    public function onStart(Timer $timer): void
     {
         if ($this->isEnabled()) {
-            $this->decorated->onStart($profiler);
+            $this->decorated->onStart($timer);
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStop(ProfilerTrace $trace): void
+    #[\Override]
+    public function onStop(TimerTrace $trace): void
     {
         if ($this->isEnabled()) {
             $this->decorated->onStop($trace);
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function flush(): void
     {
         // Always passthrought flush(), in order to let all handlers

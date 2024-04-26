@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Handler;
 
-use MakinaCorpus\Profiling\Profiler;
-use MakinaCorpus\Profiling\ProfilerTrace;
+use MakinaCorpus\Profiling\Timer;
+use MakinaCorpus\Profiling\TimerTrace;
 use MakinaCorpus\Profiling\TraceHandler;
 
 /**
@@ -22,41 +22,31 @@ class TraceHandlerDecorator implements NamedTraceHandler
         private TraceHandler $decorated,
     ) {}
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function setThreshold(?int $memoryThreshold, ?float $timeThreshold): void
     {
         $this->decorated->setThreshold($memoryThreshold, $timeThreshold);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStart(Profiler $profiler): void
+    #[\Override]
+    public function onStart(Timer $timer): void
     {
-        $this->decorated->onStart($profiler);
+        $this->decorated->onStart($timer);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function onStop(ProfilerTrace $trace): void
+    #[\Override]
+    public function onStop(TimerTrace $trace): void
     {
         $this->decorated->onStop($trace);
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function flush(): void
     {
         $this->decorated->flush();
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function setName(string $name): void
     { 
         if ($this->decorated instanceof NamedTraceHandler) {
@@ -65,9 +55,7 @@ class TraceHandlerDecorator implements NamedTraceHandler
         $this->name = $name;
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function getName(): string
     {
         if ($this->decorated instanceof NamedTraceHandler) {
