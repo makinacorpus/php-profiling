@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Bridge\Symfony\EventSubscriber;
 
-use MakinaCorpus\Profiling\ContextInfo;
-use MakinaCorpus\Profiling\Matcher;
+use MakinaCorpus\Profiling\Helper\Matcher;
 use MakinaCorpus\Profiling\Profiler;
+use MakinaCorpus\Profiling\RequestContext;
 use MakinaCorpus\Profiling\Timer;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Event\ConsoleErrorEvent;
 use Symfony\Component\Console\Event\ConsoleTerminateEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\TerminateEvent;
+use Symfony\Component\HttpKernel\KernelEvents;
 
 class PrometheusEventSubscriber implements EventSubscriberInterface
 {
@@ -68,7 +68,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $context = ContextInfo::request($event->getRequest());
+        $context = RequestContext::request($event->getRequest());
 
         if (\in_array($context->method, $this->ignoredMethods) || $this->ignoredRoutes?->match($context->route)) {
             $this->profiler->enterContext($context, false);
@@ -84,7 +84,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
         if ($this->profiler->isPrometheusEnabled()) {
             $context = $this->profiler->getContext();
             $exception = $event->getThrowable();
-            $this->profiler->counter('http_exception_total', [$context->route, $context->method, ContextInfo::name($exception)], 1);
+            $this->profiler->counter('http_exception_total', [$context->route, $context->method, RequestContext::name($exception)], 1);
         }
     }
 
@@ -108,7 +108,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
     public function onConsoleCommand(ConsoleCommandEvent $event): void
     {
         $this->started = $this->profiler->timer('command');
-        $context = ContextInfo::command($event->getCommand()->getName());
+        $context = RequestContext::command($event->getCommand()->getName());
 
         if ($this->ignoredCommands?->match($context->route)) {
             $this->profiler->enterContext($context, false);
@@ -123,7 +123,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
         if ($this->profiler->isPrometheusEnabled()) {
             $context = $this->profiler->getContext();
             $exception = $event->getError();
-            $this->profiler->counter('console_exception_total', [$context->route, $context->method, ContextInfo::name($exception)], 1);
+            $this->profiler->counter('console_exception_total', [$context->route, $context->method, RequestContext::name($exception)], 1);
         }
     }
 

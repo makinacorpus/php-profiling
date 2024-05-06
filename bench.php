@@ -1,16 +1,16 @@
 <?php
 
-use MakinaCorpus\Profiling\ContextInfo;
-use MakinaCorpus\Profiling\Handler\Formatter\JsonFormatter;
-use MakinaCorpus\Profiling\Handler\StreamHandler;
-use MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler;
 use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
 use MakinaCorpus\Profiling\Profiler\DispatchProfilerDecorator;
 use MakinaCorpus\Profiling\Profiler\TracingProfilerDecorator;
 use MakinaCorpus\Profiling\Prometheus\Logger\MemorySampleLogger;
 use MakinaCorpus\Profiling\Prometheus\Schema\ArraySchema;
 use MakinaCorpus\Profiling\Prometheus\Storage\NullStorage;
+use MakinaCorpus\Profiling\RequestContext;
 use MakinaCorpus\Profiling\Tests\Profiler\TestingTraceHandler;
+use MakinaCorpus\Profiling\Timer\Handler\Formatter\JsonFormatter;
+use MakinaCorpus\Profiling\Timer\Handler\StreamHandler;
+use MakinaCorpus\Profiling\Timer\Handler\SymfonyStopwatchHandler;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 require_once __DIR__ . '/vendor/autoload.php';
@@ -55,7 +55,7 @@ $context = new DispatchProfilerDecorator(
     ['foo', 'bar', 'baz']
 );
 
-$context->enterContext(ContextInfo::null());
+$context->enterContext(RequestContext::null());
 
 $start = microtime(true);
 $max = 1000;

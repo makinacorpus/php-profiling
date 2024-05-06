@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Profiler;
 
-use MakinaCorpus\Profiling\ContextInfo;
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
+use MakinaCorpus\Profiling\RequestContext;
 use MakinaCorpus\Profiling\Timer;
 
 abstract class AbstractProfilerDecorator implements Profiler
@@ -51,13 +51,13 @@ abstract class AbstractProfilerDecorator implements Profiler
     }
 
     #[\Override]
-    public function enterContext(ContextInfo $context, bool $enablePrometheus = false): void
+    public function enterContext(RequestContext $context, bool $enablePrometheus = false): void
     {
         $this->decorated->enterContext($context, $enablePrometheus);
     }
 
     #[\Override]
-    public function getContext(): ContextInfo
+    public function getContext(): RequestContext
     {
         return $this->decorated->getContext();
     }

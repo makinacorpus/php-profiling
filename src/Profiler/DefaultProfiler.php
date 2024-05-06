@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Profiler;
 
-use MakinaCorpus\Profiling\ContextInfo;
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\Prometheus\Logger\NullSampleLogger;
 use MakinaCorpus\Profiling\Prometheus\Logger\SampleLogger;
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
+use MakinaCorpus\Profiling\RequestContext;
 use MakinaCorpus\Profiling\Timer;
 
 /**
@@ -19,7 +19,7 @@ use MakinaCorpus\Profiling\Timer;
  */
 final class DefaultProfiler implements Profiler
 {
-    private ?ContextInfo $context = null;
+    private ?RequestContext $context = null;
     private NullSampleLogger $nullSampleLogger;
     private bool $prometheusReallyEnabled = false;
     /** @var Timer[] */
@@ -52,7 +52,7 @@ final class DefaultProfiler implements Profiler
     }
 
     #[\Override]
-    public function enterContext(ContextInfo $context, bool $enablePrometheus = false): void
+    public function enterContext(RequestContext $context, bool $enablePrometheus = false): void
     {
         if ($this->context) {
             $this->flush();
@@ -62,9 +62,9 @@ final class DefaultProfiler implements Profiler
     }
 
     #[\Override]
-    public function getContext(): ContextInfo
+    public function getContext(): RequestContext
     {
-        return $this->context ??= ContextInfo::null();
+        return $this->context ??= RequestContext::null();
     }
 
     #[\Override]

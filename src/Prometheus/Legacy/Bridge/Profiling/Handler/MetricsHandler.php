@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace MakinaCorpus\Profiling\Prometheus\Legacy\Bridge\Profiling\Handler;
+namespace MakinaCorpus\Profiling\Prometheus\Legacy;
 
-use MakinaCorpus\Profiling\Handler\AbstractHandler;
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\Timer;
-use MakinaCorpus\Profiling\TimerTrace;
+use MakinaCorpus\Profiling\Timer\Handler\AbstractHandler;
+use MakinaCorpus\Profiling\Timer\TimerTrace;
 
 class MetricsHandler extends AbstractHandler
 {

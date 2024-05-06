@@ -135,17 +135,17 @@ There are many methods on the `MakinaCorpus\Profiling\Timer` interface, all are 
 Timer trace handlers are components that listen to all timers being emited,
 then can log information. A few handlers are provided by default:
 
- - `MakinaCorpus\Profiling\Handler\SentryHandler` (`sentry`) can send your
+ - `MakinaCorpus\Profiling\Timer\Handler\SentryHandler` (`sentry`) can send your
    timers to a Sentry instance.
 
- - `MakinaCorpus\Profiling\Handler\StoreHandler` (`store`) can send your
+ - `MakinaCorpus\Profiling\Timer\Handler\StoreHandler` (`store`) can send your
    timers to a local storage implementation. Only one implementation exist
    as of now, which sends data to an SQL database table.
 
- - `MakinaCorpus\Profiling\Handler\StreamHandler` (`file`) sends your
+ - `MakinaCorpus\Profiling\Timer\Handler\StreamHandler` (`file`) sends your
    timers into a log file, each timer gets a line.
 
- - `MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler` (`stopwatch`)
+ - `MakinaCorpus\Profiling\Timer\Handler\SymfonyStopwatchHandler` (`stopwatch`)
    sends the timers into the `symfony/stopwatch` component. This is useful
    when the web profiler debug toolbar is installed, in development mode.
 

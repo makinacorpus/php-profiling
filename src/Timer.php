@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling;
 
+use MakinaCorpus\Profiling\Timer\TimerTrace;
+
 class Timer implements TimerTrace
 {
     private ?string $id = null;

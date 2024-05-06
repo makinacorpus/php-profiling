@@ -6,7 +6,7 @@ namespace MakinaCorpus\Profiling\Profiler;
 
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\Timer;
-use MakinaCorpus\Profiling\TraceHandler;
+use MakinaCorpus\Profiling\Timer\Handler\TraceHandler;
 
 /**
  * Emits timer traces into registered trace handlers.

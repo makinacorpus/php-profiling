@@ -46,10 +46,10 @@ services:
 
     # Listener, where the magic happens.
     profiling.prometheus.matcher.console:
-        class: MakinaCorpus\Profiling\Matcher
+        class: MakinaCorpus\Profiling\Helper\Matcher
         arguments: ['']
     profiling.prometheus.matcher.route:
-        class: MakinaCorpus\Profiling\Matcher
+        class: MakinaCorpus\Profiling\Helper\Matcher
         arguments: ['']
     profiling.prometheus.event_subscriber.request:
         class: MakinaCorpus\Profiling\Bridge\Symfony\EventSubscriber\PrometheusEventSubscriber

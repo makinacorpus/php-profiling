@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Bridge\Symfony\DependencyInjection;
 
-use MakinaCorpus\Profiling\TraceStore;
-use MakinaCorpus\Profiling\Store\TraceStoreRegistry;
+use MakinaCorpus\Profiling\Timer\Storage\TraceStore;
+use MakinaCorpus\Profiling\Timer\Storage\TraceStoreRegistry;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
 class ContainerTraceStoreRegistry implements TraceStoreRegistry

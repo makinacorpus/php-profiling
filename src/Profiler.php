@@ -51,12 +51,12 @@ interface Profiler
     /**
      * Enter new execution context.
      */
-    public function enterContext(ContextInfo $context, bool $enablePrometheus = false): void;
+    public function enterContext(RequestContext $context, bool $enablePrometheus = false): void;
 
     /**
      * Get current execution context.
      */
-    public function getContext(): ContextInfo;
+    public function getContext(): RequestContext;
 
     /**
      * Exit current execution context and flush.

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Tests\Profiler;
 
-use MakinaCorpus\Profiling\Handler\AbstractHandler;
 use MakinaCorpus\Profiling\Timer;
-use MakinaCorpus\Profiling\TimerTrace;
+use MakinaCorpus\Profiling\Timer\Handler\AbstractHandler;
+use MakinaCorpus\Profiling\Timer\TimerTrace;
 
 final class TestingTraceHandler extends AbstractHandler
 {
