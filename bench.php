@@ -1,11 +1,15 @@
 <?php
 
+use MakinaCorpus\Profiling\ContextInfo;
 use MakinaCorpus\Profiling\Handler\Formatter\JsonFormatter;
 use MakinaCorpus\Profiling\Handler\StreamHandler;
 use MakinaCorpus\Profiling\Handler\SymfonyStopwatchHandler;
 use MakinaCorpus\Profiling\Profiler\DefaultProfiler;
 use MakinaCorpus\Profiling\Profiler\DispatchProfilerDecorator;
 use MakinaCorpus\Profiling\Profiler\TracingProfilerDecorator;
+use MakinaCorpus\Profiling\Prometheus\Logger\MemorySampleLogger;
+use MakinaCorpus\Profiling\Prometheus\Schema\ArraySchema;
+use MakinaCorpus\Profiling\Prometheus\Storage\NullStorage;
 use MakinaCorpus\Profiling\Tests\Profiler\TestingTraceHandler;
 use Symfony\Component\Stopwatch\Stopwatch;
 
@@ -24,7 +28,17 @@ $jsonTextFormatter->setFormatter(new JsonFormatter());
 
 $context = new DispatchProfilerDecorator(
     new TracingProfilerDecorator(
-        new DefaultProfiler(),
+        new DefaultProfiler(
+            true,
+            true,
+            new MemorySampleLogger(
+                new ArraySchema(
+                    'symfony',
+                    [], // @todo schema
+                ),
+                new NullStorage(),
+            ),
+        ),
         [
             'default' => new TestingTraceHandler(),
             'other' => new SymfonyStopwatchHandler(
@@ -41,13 +55,25 @@ $context = new DispatchProfilerDecorator(
     ['foo', 'bar', 'baz']
 );
 
+$context->enterContext(ContextInfo::null());
+
 $start = microtime(true);
-for ($i = 0; $i < 1000; ++$i) {
-    $profiler = $context->createTimer('foo');
-    $child1 = $profiler->start('fizz');
-    $child2 = $profiler->start('bla');
+$max = 1000;
+for ($i = 0; $i < $max; ++$i) {
+    $timer = $context->createTimer('foo');
+    $child1 = $timer->start('fizz');
+    $child2 = $timer->start('bla');
 
     $child2->stop();
-    $profiler->stop();
+    $timer->stop();
 }
-echo "Time: ", (microtime(true) - $start) * 1000, " ms\n";
+echo "Time [timer,child,child] (", $max, " iterations): ", (microtime(true) - $start) * 1000, " ms\n";
+
+$start = microtime(true);
+for ($i = 0; $i < $max; ++$i) {
+    $context->counter('foo', []);
+    $context->summary('bar', [], 10.6);
+    $context->gauge('fizz', [], 37.6);
+}
+echo "Time [counter,summary,gauge] (", $max, " iterations): ", (microtime(true) - $start) * 1000, " ms\n";
+
