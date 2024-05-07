@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling;
 
+use MakinaCorpus\Profiling\Error\NotImplementedError;
 use MakinaCorpus\Profiling\Timer\TimerTrace;
 
 class Timer implements TimerTrace
@@ -239,7 +240,7 @@ class Timer implements TimerTrace
         }
 
         // @todo Need a way to propagate hrtime from parent.
-        throw new \Exception("Not implemented yet.");
+        throw new NotImplementedError("Not implemented yet.");
     }
 
     #[\Override]
@@ -250,7 +251,7 @@ class Timer implements TimerTrace
         }
 
         // @todo Need a way to propagate hrtime from parent.
-        throw new \Exception("Not implemented yet.");
+        throw new NotImplementedError("Not implemented yet.");
     }
 
     #[\Override]

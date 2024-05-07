@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Timer\Handler;
 
+use MakinaCorpus\Profiling\Error\HandlerError;
 use MakinaCorpus\Profiling\Timer;
 use MakinaCorpus\Profiling\Timer\TimerTrace;
 
@@ -24,7 +25,7 @@ class StreamHandler extends AbstractFormatterHandler
         } else if (\is_string($stream)) {
             $this->url = $stream;
         } else {
-            throw new \InvalidArgumentException("\$stream must be a string or an opened resource.");
+            throw new HandlerError("\$stream must be a string or an opened resource.");
         }
         $this->filePermission = $filePermission;
         $this->useLocking = $useLocking;
@@ -97,14 +98,14 @@ class StreamHandler extends AbstractFormatterHandler
             }
             if (!\is_resource($stream)) {
                 $this->stream = null;
-                throw new \LogicException(\sprintf("Could not open file for writing: %s", $this->url ?? '<existing stream>'));
+                throw new HandlerError(\sprintf("Could not open file for writing: %s", $this->url ?? '<existing stream>'));
             }
             $this->stream = $stream;
         }
 
         $stream = $this->stream;
         if (!\is_resource($stream)) {
-            throw new \LogicException("No stream was opened yet.");
+            throw new HandlerError("No stream was opened yet.");
         }
 
         if ($this->appendLineFeed) {
@@ -141,7 +142,7 @@ class StreamHandler extends AbstractFormatterHandler
         if (!\is_dir($url)) {
             $status = \mkdir($url, 0777, true);
             if (false === $status && !\is_dir($url)) {
-                throw new \LogicException(\sprintf("Could not create director: %s", $url));
+                throw new HandlerError(\sprintf("Could not create director: %s", $url));
             }
         }
         $this->directoryCreated = true;

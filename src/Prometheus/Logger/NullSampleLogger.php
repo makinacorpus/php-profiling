@@ -17,13 +17,13 @@ class NullSampleLogger implements SampleLogger
     }
 
     #[\Override]
-    public function gauge(string $name, array $labelValues, ?float $value = null): Gauge
+    public function gauge(string $name, array $labelValues, null|float|int $value = null): Gauge
     {
         return new Gauge('null', [], []);
     }
 
     #[\Override]
-    public function summary(string $name, array $labelValues, float ...$values): Summary
+    public function summary(string $name, array $labelValues, float|int ...$values): Summary
     {
         return new Summary('null', [], []);
     }

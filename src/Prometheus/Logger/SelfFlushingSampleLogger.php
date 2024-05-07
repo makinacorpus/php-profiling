@@ -39,7 +39,7 @@ class SelfFlushingSampleLogger implements SampleLogger
     }
 
     #[\Override]
-    public function gauge(string $name, array $labelValues, ?float $value = null): Gauge
+    public function gauge(string $name, array $labelValues, null|float|int $value = null): Gauge
     {
         try {
             return $this->decorated->gauge($name, $labelValues, $value);
@@ -49,7 +49,7 @@ class SelfFlushingSampleLogger implements SampleLogger
     }
 
     #[\Override]
-    public function summary(string $name, array $labelValues, float ...$values): Summary
+    public function summary(string $name, array $labelValues, float|int ...$values): Summary
     {
         try {
             return $this->decorated->summary($name, $labelValues, ...$values);

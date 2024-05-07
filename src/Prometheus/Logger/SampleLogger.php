@@ -25,12 +25,12 @@ interface SampleLogger
     /**
      * Set a gauge value.
      */
-    public function gauge(string $name, array $labelValues, ?float $value = null): Gauge;
+    public function gauge(string $name, array $labelValues, null|float|int $value = null): Gauge;
 
     /**
      * Set one or more summary values.
      */
-    public function summary(string $name, array $labelValues, float ...$values): Summary;
+    public function summary(string $name, array $labelValues, float|int ...$values): Summary;
 
     /**
      * Set one or more histogram values.

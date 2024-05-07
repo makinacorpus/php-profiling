@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Bridge\Symfony\DependencyInjection;
 
+use MakinaCorpus\Profiling\Bridge\Symfony\Command\PrometheusSysInfoCommand;
 use MakinaCorpus\Profiling\Bridge\Symfony\Command\StoreClearCommand;
 use MakinaCorpus\Profiling\Helper\Matcher;
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\Profiler\TracingProfilerDecorator;
+use MakinaCorpus\Profiling\Prometheus\Collector\SysInfoCollector;
 use MakinaCorpus\Profiling\Prometheus\Schema\ArraySchema;
 use MakinaCorpus\Profiling\Prometheus\Storage\QueryBuilderStorage;
 use MakinaCorpus\Profiling\Timer\Handler\NamedTraceHandler;
@@ -284,6 +286,46 @@ final class ProfilingExtension extends Extension
         $container->setDefinition('profiling.prometheus.storage', $storageDefinition);
 
         $this->registerPrometheusSchema($container, $config['schema'] ?? []);
+
+        if ($config['sys_info']['enabled'] ?? false) {
+            $this->registerPrometheusSysInfo($config['sys_info'], $container);
+        }
+    }
+
+    private function registerPrometheusSysInfo(array $config, ContainerBuilder $container)
+    {
+        $disks = [];
+        if (!empty($config['disk_size'])) {
+            if (\is_bool($config['disk_size'])) {
+                if ($config['disk_size']) { // @phpstan-ignore-line
+                    $disks['app'] = new Parameter('kernel.project_dir');
+                }
+            } else if (\is_array($config['disk_size'])) {
+                $disks = $config['disk_size'];
+            } else {
+                throw new InvalidArgumentException("'profiling.prometheus.sys_info.disk_size' must be a boolean or an array of key-value pairs.");
+            }
+        }
+
+        // Add service and register it as an event listener.
+        $definition = new Definition();
+        $definition->setClass(SysInfoCollector::class);
+        $definition->setArguments([
+            new Reference('profiling.prometheus.sample_logger'),
+            (bool) $config['load_average'],
+            (bool) $config['memory_usage'],
+            $disks,
+        ]);
+        $container->setDefinition('profiling.prometheus.sys_info_collector', $definition);
+
+        // Add related command as well.
+        $commandDef = new Definition();
+        $commandDef->setClass(PrometheusSysInfoCommand::class);
+        $commandDef->setArguments([
+            new Reference('profiling.prometheus.sys_info_collector'),
+        ]);
+        $commandDef->addTag('console.command');
+        $container->setDefinition(PrometheusSysInfoCommand::class, $commandDef);
     }
 
     private function getPrometheusDefaultSchemaAsArray(ContainerBuilder $container): array

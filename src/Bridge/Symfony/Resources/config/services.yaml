@@ -58,4 +58,5 @@ services:
             - '@profiling.prometheus.matcher.console'
             - '@profiling.prometheus.matcher.route'
             - '%profiling.prometheus.request_ignored_methods%'
+            - '@?profiling.prometheus.sys_info_collector'
         tags: ['kernel.event_subscriber']

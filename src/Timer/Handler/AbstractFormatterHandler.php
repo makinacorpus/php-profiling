@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Timer\Handler;
 
+use MakinaCorpus\Profiling\Error\HandlerError;
 use MakinaCorpus\Profiling\Timer\Handler\Formatter\PlainTextFormatter;
 use MakinaCorpus\Profiling\Timer\TimerTrace;
 
@@ -37,7 +38,7 @@ abstract class AbstractFormatterHandler extends AbstractHandler
     public function setFormatter(Formatter $formatter): void
     {
         if ($this->started) {
-            throw new \LogicException("Cannot change formatter if output has started.");
+            throw new HandlerError("Cannot change formatter if output has started.");
         }
         $this->formatter = $formatter;
     }

@@ -276,7 +276,7 @@ class QueryBuilderStorage implements Storage
                 SQL,
                 [
                     $this->getTable('gauge'),
-                    ExpressionFactory::constantTable($counterItems),
+                    ExpressionFactory::constantTable($gaugeItems),
                     ExpressionFactory::raw('current_timestamp'),
                 ]
             );

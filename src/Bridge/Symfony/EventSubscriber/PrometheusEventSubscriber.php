@@ -6,6 +6,7 @@ namespace MakinaCorpus\Profiling\Bridge\Symfony\EventSubscriber;
 
 use MakinaCorpus\Profiling\Helper\Matcher;
 use MakinaCorpus\Profiling\Profiler;
+use MakinaCorpus\Profiling\Prometheus\Collector\SysInfoCollector;
 use MakinaCorpus\Profiling\RequestContext;
 use MakinaCorpus\Profiling\Timer;
 use Symfony\Component\Console\ConsoleEvents;
@@ -27,6 +28,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
         private ?Matcher $ignoredCommands = null,
         private ?Matcher $ignoredRoutes = null,
         private array $ignoredMethods = ['OPTION'],
+        private ?SysInfoCollector $sysInfoCollector = null,
     ) {
         ($this->ignoredRoutes ??= new Matcher())->addPattern('prometheus_metrics');
     }
@@ -100,6 +102,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
             }
             $this->profiler->summary('http_memory_consuption', $labels, \memory_get_peak_usage(true));
             $this->profiler->counter('http_response_total', $labels, 1);
+            $this->sysInfoCollector?->collect();
         }
 
         $this->profiler->exitContext();

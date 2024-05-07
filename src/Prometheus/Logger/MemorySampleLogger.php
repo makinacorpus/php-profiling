@@ -60,7 +60,7 @@ class MemorySampleLogger implements SampleLogger
     }
 
     #[\Override]
-    public function gauge(string $name, array $labelValues, ?float $value = null): Gauge
+    public function gauge(string $name, array $labelValues, null|float|int $value = null): Gauge
     {
         $meta = $this->schema->getGauge($name);
 
@@ -84,7 +84,7 @@ class MemorySampleLogger implements SampleLogger
     }
 
     #[\Override]
-    public function summary(string $name, array $labelValues, float ...$values): Summary
+    public function summary(string $name, array $labelValues, float|int ...$values): Summary
     {
         $meta = $this->schema->getSummary($name);
 

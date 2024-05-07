@@ -62,3 +62,55 @@ profiling:
                 type: counter
                 help: total response count
                 labels: [action, method, status]
+            sys_load_avg:
+                type: gauge
+                help: load average for the previous minute
+                labels: [span]
+            sys_mem_total:
+                type: gauge
+                help: total memory in bytes
+                labels: []
+            sys_mem_free:
+                type: gauge
+                help: free memory in bytes
+                labels: []
+            sys_mem_used:
+                type: gauge
+                help: used memory in bytes
+                labels: []
+            sys_mem_available:
+                type: gauge
+                help: available memory in bytes
+                labels: []
+            sys_mem_buffers:
+                type: gauge
+                help: memory buffers in bytes
+                labels: []
+            sys_mem_cached:
+                type: gauge
+                help: memory cache in bytes
+                labels: []
+            sys_mem_swap_total:
+                type: gauge
+                help: total swap memory size in bytes
+                labels: []
+            sys_mem_swap_free:
+                type: gauge
+                help: free swap memory size in bytes
+                labels: []
+            sys_mem_swap_used:
+                type: gauge
+                help: used swap memory size in bytes
+                labels: []
+            sys_disk_total:
+                type: gauge
+                help: disk total space size in bytes
+                labels: [name]
+            sys_disk_free:
+                type: gauge
+                help: disk free space size in bytes
+                labels: [name]
+            sys_disk_used:
+                type: gauge
+                help: disk used space size in bytes
+                labels: [name]

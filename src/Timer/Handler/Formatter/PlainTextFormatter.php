@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Timer\Handler\Formatter;
 
+use MakinaCorpus\Profiling\Error\HandlerError;
 use MakinaCorpus\Profiling\Helper\Format;
 use MakinaCorpus\Profiling\Helper\WithPidTrait;
 use MakinaCorpus\Profiling\Timer\Handler\Formatter;
@@ -35,7 +36,7 @@ class PlainTextFormatter implements Formatter
     public function setFormat(string $format): void
     {
         if ($this->started) {
-            throw new \LogicException("Cannot change format if output has started.");
+            throw new HandlerError("Cannot change format if output has started.");
         }
         $this->format = $format;
     }

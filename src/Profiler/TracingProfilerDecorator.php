@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Profiler;
 
+use MakinaCorpus\Profiling\Error\HandlerError;
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\Timer;
 use MakinaCorpus\Profiling\Timer\Handler\TraceHandler;
@@ -37,7 +38,7 @@ final class TracingProfilerDecorator extends AbstractProfilerDecorator
         // Validate handler and pre-build the catch-all list.
         foreach ($handlers as $handlerName => $handler) {
             if (!$handler instanceof TraceHandler) {
-                throw new \InvalidArgumentException(\sprintf("Handler '%s' is not a %s instance.", $handlerName, TraceHandler::class));
+                throw new HandlerError(\sprintf("Handler '%s' is not a %s instance.", $handlerName, TraceHandler::class));
             }
             $this->handlers[$handlerName] = $handler;
             $this->catchAll[$handlerName] = true;

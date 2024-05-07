@@ -1,6 +1,9 @@
 #
 # Profiling configuration file, complete, will all default values.
 #
+# You may either copy/paste this file in your configuration then modify it
+# or simply create an empty file and override only what you need.
+#
 # Profiling is enabled by default, this means that all timers you start are
 # kept in memory until it is flushed.
 #
@@ -153,3 +156,47 @@ profiling:
         # You can add as many entries as you wish.
         #
         schema: {}
+
+        #
+        # This API can collect a few system information, not much but enough
+        # for basic monitoring when you don't have access to better tools.
+        #
+        sys_info:
+            #
+            # Disable completely sys info collection.
+            #
+            enabled: false
+
+            #
+            # Monitor CPU load. It uses sys_getloadavg() which does not exist
+            # on Windows environement. It returns a single value for all CPU
+            # altogether.
+            #
+            load_average: true
+
+            #
+            # Monitor system memory usage. This will read directly /proc/meminfo
+            # whis is basic Linux feature, but if it's not there, this will be
+            # disabled silently.
+            #
+            memory_usage: true
+
+            #
+            # Monitor disk size. You can either set:
+            #
+            #   - false|null: disable it entirely.
+            #
+            #   - true: arbitrarily monitor disk size in the application mount
+            #     point, which in most cases is not worth it.
+            #
+            #   - {name:path,...}: keys will be sample name which is used for
+            #     the "name" label, values are mount path in the filesystem.
+            #
+            # Schema for this gauge samples will be automatically built during
+            # kernel compilation.
+            #
+            disk_size:
+                app: "%kernel.project_dir%"
+                tmp: /tmp
+                upload: "%kernel.project_dir%/var/upload"
+                # ...

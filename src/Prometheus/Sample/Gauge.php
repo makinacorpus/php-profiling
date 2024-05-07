@@ -6,12 +6,12 @@ namespace MakinaCorpus\Profiling\Prometheus\Sample;
 
 class Gauge extends Sample
 {
-    private float $value = 0.0;
+    private float|int $value = 0;
 
     /**
      * Get gauge value.
      */
-    public function getValue(): float
+    public function getValue(): float|int
     {
         return $this->value;
     }
@@ -19,7 +19,7 @@ class Gauge extends Sample
     /**
      * Set gauge value.
      */
-    public function set(float $value): static
+    public function set(float|int $value): static
     {
         $this->value = $value;
 

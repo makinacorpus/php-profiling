@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Tests\Timer\Handler\Formatter;
 
+use MakinaCorpus\Profiling\Error\HandlerError;
 use MakinaCorpus\Profiling\Timer;
 use MakinaCorpus\Profiling\Timer\Handler\Formatter\PlainTextFormatter;
 use PHPUnit\Framework\TestCase;
@@ -69,7 +70,7 @@ class PlainTextFormatterTest extends TestCase
         $formatter = new PlainTextFormatter();
         $formatter->format((new Timer())->execute());
 
-        self::expectException(\LogicException::class);
+        self::expectException(HandlerError::class);
         $formatter->setFormat('pouet');
     }
 }

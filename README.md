@@ -380,6 +380,42 @@ Histograms are not implemented yet.
 
  - `NAMESPACE_monolog_message_total` (`counter`), `{action: ROUTE|COMMAND_NAME|MESSAGE_CLASS, method: "message"|"command"|HTTP_METHOD, severity: MONOLOG_LEVEL, channel: MONOLOG_CHANNEL}`
 
+#### System information
+
+If you don't have system monitoring, this bundle can collect a few system
+information samples.
+
+Please see complete documentation in the
+`src/Bridge/Symfony/Resources/config/packages/profiling.yaml` file.
+
+CPU load average samples:
+
+ - `NAMESPACE_sys_load_avg` (`gauge`), `{span: INT}` - value as a fractional number, for the `span` last minutes.
+
+Memory usage samples:
+
+ - `NAMESPACE_sys_mem_total` (`gauge`) - value in bytes.
+ - `NAMESPACE_sys_mem_free` (`gauge`) - value in bytes.
+ - `NAMESPACE_sys_mem_used` (`gauge`) - value in bytes.
+ - `NAMESPACE_sys_mem_available` (`gauge`) - value in bytes.
+ - `NAMESPACE_sys_mem_buffers` (`gauge`) - value in bytes.
+ - `NAMESPACE_sys_mem_cached` (`gauge`) - value in bytes.
+ - `NAMESPACE_sys_mem_swap_total` (`gauge`) - value in bytes.
+ - `NAMESPACE_sys_mem_swap_free` (`gauge`) - value in bytes.
+ - `NAMESPACE_sys_mem_swap_used` (`gauge`) - value in bytes.
+
+Disk usage samples:
+
+ - `NAMESPACE_sys_disk_total` (`gauge`), `{name: NAME}` - value in bytes.
+ - `NAMESPACE_sys_disk_free` (`gauge`), `{name: NAME}` - value in bytes.
+ - `NAMESPACE_sys_disk_used` (`gauge`), `{name: NAME}` - value in bytes.
+
+Per default, if you don't configure any disk, the current project directory
+mount point is targeted, and `NAME` is `app`.
+
+Warning: because the probes are only collecting data when a request happen
+you can chose to run the `profiling:prometheus:sys-info` console command to run
+as a cron job for collecting system information regularily.
 
 ## Inject profiler into your services
 
