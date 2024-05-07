@@ -99,14 +99,19 @@ final class DefaultProfiler implements Profiler
     #[\Override]
     public function flush(): void
     {
+        // Flush the sample logger first, since we are timing it in the event
+        // listener, so that timers take into account its storage time.
         try {
-            // Stop all timers.
+            $this->sampleLogger?->flush();
+        } catch (\Throwable) {
+            // Let it pass and stop timers.
+        }
+
+        // Stop all timers.
+        try {
             foreach ($this->timers as $timer) {
                 $timer->stop();
             }
-            // Always flush the only one which really stores, prevent data loss
-            // when this object is accidentally disabled before request ending.
-            $this->sampleLogger?->flush();
         } finally {
             $this->timers = [];
         }

@@ -11,9 +11,6 @@ use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
 use MakinaCorpus\Profiling\Prometheus\Sample\Sample;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
-use MakinaCorpus\Profiling\Prometheus\Schema\AbstractMeta;
-use MakinaCorpus\Profiling\Prometheus\Schema\CounterMeta;
-use MakinaCorpus\Profiling\Prometheus\Schema\GaugeMeta;
 use MakinaCorpus\Profiling\Prometheus\Schema\Schema;
 use MakinaCorpus\Profiling\Prometheus\Schema\SummaryMeta;
 use MakinaCorpus\QueryBuilder\BridgeFactory;
@@ -198,6 +195,7 @@ class QueryBuilderStorage implements Storage
         $databaseSession = $this->getDatabaseSession();
 
         $counterItems = $gaugeItems = $summaryItems = [];
+        $counterMeta = $gaugeMeta = $summaryMeta = [];
 
         foreach ($samples as $sample) {
             \assert($sample instanceof Sample);
@@ -207,7 +205,14 @@ class QueryBuilderStorage implements Storage
 
             if ($sample instanceof Counter) {
                 $meta = $schema->getCounter($name);
-                $this->ensureMetadata($schema, $meta);
+
+                if (!\array_key_exists($name, $counterMeta)) {
+                    $counterMeta[$name] = ExpressionFactory::row([
+                        $namespacedName,
+                        ExpressionFactory::value($meta->getLabelNames(), 'text[]'),
+                        $meta->getHelp(),
+                    ]);
+                }
 
                 $counterItems[] = ExpressionFactory::row([
                     $namespacedName,
@@ -217,7 +222,14 @@ class QueryBuilderStorage implements Storage
                 ]);
             } else if ($sample instanceof Gauge) {
                 $meta = $schema->getGauge($name);
-                $this->ensureMetadata($schema, $meta);
+
+                if (!\array_key_exists($name, $gaugeMeta)) {
+                    $gaugeMeta[$name] = ExpressionFactory::row([
+                        $namespacedName,
+                        ExpressionFactory::value($meta->getLabelNames(), 'text[]'),
+                        $meta->getHelp(),
+                    ]);
+                }
 
                 $gaugeItems[] = ExpressionFactory::row([
                     $namespacedName,
@@ -227,7 +239,16 @@ class QueryBuilderStorage implements Storage
                 ]);
             } else if ($sample instanceof Summary) {
                 $meta = $schema->getSummary($name);
-                $this->ensureMetadata($schema, $meta);
+
+                if (!\array_key_exists($name, $summaryMeta)) {
+                    $summaryMeta[$name] = ExpressionFactory::row([
+                        $namespacedName,
+                        ExpressionFactory::value($meta->getLabelNames(), 'text[]'),
+                        $meta->getHelp(),
+                        $meta->getMaxAge(),
+                        ExpressionFactory::value($meta->getQuantiles(), 'float[]'),
+                    ]);
+                }
 
                 foreach ($sample->getValues() as $sampleValue) {
                     $validUntil = $sampleValue->measuredAt->add(new \DateInterval(\sprintf('PT%dS', $meta->getMaxAge())));
@@ -245,6 +266,23 @@ class QueryBuilderStorage implements Storage
         }
 
         if ($counterItems) {
+            $databaseSession->executeStatement(
+                <<<SQL
+                INSERT INTO ? (
+                    "name", "labels", "help"
+                )
+                ?
+                ON CONFLICT ("name")
+                    DO UPDATE SET
+                        "labels" = excluded."labels",
+                        "help" = excluded."help"
+                SQL,
+                [
+                    $this->getTable('counter_meta'),
+                    ExpressionFactory::constantTable($counterMeta),
+                ]
+            );
+
             $databaseSession->executeStatement(
                 <<<SQL
                 INSERT INTO ? (
@@ -267,6 +305,23 @@ class QueryBuilderStorage implements Storage
             $databaseSession->executeStatement(
                 <<<SQL
                 INSERT INTO ? (
+                    "name", "labels", "help"
+                )
+                ?
+                ON CONFLICT ("name")
+                    DO UPDATE SET
+                        "labels" = excluded."labels",
+                        "help" = excluded."help"
+                SQL,
+                [
+                    $this->getTable('gauge_meta'),
+                    ExpressionFactory::constantTable($gaugeMeta),
+                ]
+            );
+
+            $databaseSession->executeStatement(
+                <<<SQL
+                INSERT INTO ? (
                     "name", "labels", "value", "updated"
                 ) 
                 ?
@@ -286,6 +341,25 @@ class QueryBuilderStorage implements Storage
             $databaseSession->executeStatement(
                 <<<SQL
                 INSERT INTO ? (
+                    "name", "labels", "help", "max_age_seconds", "quantiles"
+                )
+                ?
+                ON CONFLICT ("name")
+                    DO UPDATE SET
+                        "labels" = excluded."labels",
+                        "help" = excluded."help",
+                        "max_age_seconds" = excluded."max_age_seconds",
+                        "quantiles" = excluded."quantiles"
+                SQL,
+                [
+                    $this->getTable('summary_meta'),
+                    ExpressionFactory::constantTable($summaryMeta),
+                ]
+            );
+
+            $databaseSession->executeStatement(
+                <<<SQL
+                INSERT INTO ? (
                     "name", "labels", "value", "valid_until"
                 )
                 ?
@@ -296,87 +370,6 @@ class QueryBuilderStorage implements Storage
                 ]
             );
         }
-    }
-
-    private function ensureMetadata(Schema $schema, AbstractMeta $meta): void
-    {
-        $databaseSession = $this->getDatabaseSession();
-        $namespacedName = $schema->getNamespace() . '_' . $meta->getName();
-
-        if (isset($this->meta[$namespacedName])) {
-            return;
-        }
-
-        if ($meta instanceof CounterMeta) {
-            $databaseSession->executeStatement(
-                <<<SQL
-                INSERT INTO ? (
-                    "name", "labels", "help"
-                ) VALUES (
-                    ?, ?, ?
-                )
-                ON CONFLICT ("name")
-                    DO UPDATE SET
-                        "labels" = excluded."labels",
-                        "help" = excluded."help"
-                SQL,
-                [
-                    $this->getTable('counter_meta'),
-                    $namespacedName,
-                    ExpressionFactory::value($meta->getLabelNames(), 'text[]'),
-                    $meta->getName(),
-                ]
-            );
-        } else if ($meta instanceof GaugeMeta) {
-            $databaseSession->executeStatement(
-                <<<SQL
-                INSERT INTO ? (
-                    "name", "labels", "help"
-                ) VALUES (
-                    ?, ?, ?
-                )
-                ON CONFLICT ("name")
-                    DO UPDATE SET
-                        "labels" = excluded."labels",
-                        "help" = excluded."help"
-                SQL,
-                [
-                    $this->getTable('gauge_meta'),
-                    $namespacedName,
-                    ExpressionFactory::value($meta->getLabelNames(), 'text[]'),
-                    $meta->getHelp(),
-                ]
-            );
-        } else if ($meta instanceof SummaryMeta) {
-            $databaseSession->executeStatement(
-                <<<SQL
-                INSERT INTO ? (
-                    "name", "labels", "help", "max_age_seconds", "quantiles"
-                ) VALUES (
-                    ?, ?, ?, ?, ?
-                )
-                ON CONFLICT ("name")
-                    DO UPDATE SET
-                        "labels" = excluded."labels",
-                        "help" = excluded."help",
-                        "max_age_seconds" = excluded."max_age_seconds",
-                        "quantiles" = excluded."quantiles"
-                SQL,
-                [
-                    $this->getTable('summary_meta'),
-                    $namespacedName,
-                    ExpressionFactory::value($meta->getLabelNames(), 'text[]'),
-                    $meta->getHelp(),
-                    $meta->getMaxAge(),
-                    ExpressionFactory::value($meta->getQuantiles(), 'float[]'),
-                ]
-            );
-        /* } else if ($meta instanceof HistogramMeta) { */
-        } else {
-            \trigger_error(\sprintf("Meta of type '%s' is not supported.", \get_class($meta)));
-        }
-
-        $this->meta[$namespacedName] = true;
     }
 
     #[\Override]

@@ -92,20 +92,26 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
 
     public function onKernelTerminate(TerminateEvent $event): void
     {
-        if ($this->profiler->isPrometheusEnabled()) {
-            $context = $this->profiler->getContext();
-            $response = $event->getResponse();
-            $responseStatus = $response->getStatusCode();
-            $labels = [$context->route, $context->method, $responseStatus];
-            if (null !== $this->started) {
-                $this->profiler->summary('http_request_duration_msec', $labels, $this->started->getElapsedTime());
-            }
-            $this->profiler->summary('http_memory_consuption', $labels, \memory_get_peak_usage(true));
-            $this->profiler->counter('http_response_total', $labels, 1);
-            $this->sysInfoCollector?->collect();
-        }
+        try {
+            $timer = $this->profiler->timer('profiling-terminate');
 
-        $this->profiler->exitContext();
+            if ($this->profiler->isPrometheusEnabled()) {
+                $context = $this->profiler->getContext();
+                $response = $event->getResponse();
+                $responseStatus = $response->getStatusCode();
+                $labels = [$context->route, $context->method, $responseStatus];
+                if (null !== $this->started) {
+                    $this->profiler->summary('http_request_duration_msec', $labels, $this->started->getElapsedTime());
+                }
+                $this->profiler->summary('http_memory_consuption', $labels, \memory_get_peak_usage(true));
+                $this->profiler->counter('http_response_total', $labels, 1);
+                $this->sysInfoCollector?->collect();
+            }
+
+            $this->profiler->exitContext();
+        } finally {
+            $timer?->stop();
+        }
     }
 
     public function onConsoleCommand(ConsoleCommandEvent $event): void
@@ -132,18 +138,24 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
 
     public function onConsoleTerminate(ConsoleTerminateEvent $event): void
     {
-        if (!$this->profiler->isPrometheusEnabled()) {
-            $context = $this->profiler->getContext();
-            $status = $event->getExitCode();
-            $labels = [$context->route, $context->method, $status];
-            if (null !== $this->started) {
-                $this->profiler->summary('console_duration_msec', $labels, $this->started->getElapsedTime());
-            }
-            $this->profiler->summary('console_memory_consuption', $labels, \memory_get_peak_usage(true));
-            $this->profiler->counter('console_status_total', $labels, 1);
-            $this->sysInfoCollector?->collect();
-        }
+        try {
+            $timer = $this->profiler->timer('profiling-terminate');
 
-        $this->profiler->exitContext();
+            if (!$this->profiler->isPrometheusEnabled()) {
+                $context = $this->profiler->getContext();
+                $status = $event->getExitCode();
+                $labels = [$context->route, $context->method, $status];
+                if (null !== $this->started) {
+                    $this->profiler->summary('console_duration_msec', $labels, $this->started->getElapsedTime());
+                }
+                $this->profiler->summary('console_memory_consuption', $labels, \memory_get_peak_usage(true));
+                $this->profiler->counter('console_status_total', $labels, 1);
+                $this->sysInfoCollector?->collect();
+            }
+
+            $this->profiler->exitContext();
+        } finally {
+            $timer?->stop();
+        }
     }
 }
