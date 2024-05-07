@@ -141,6 +141,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
             }
             $this->profiler->summary('console_memory_consuption', $labels, \memory_get_peak_usage(true));
             $this->profiler->counter('console_status_total', $labels, 1);
+            $this->sysInfoCollector?->collect();
         }
 
         $this->profiler->exitContext();
