@@ -42,7 +42,6 @@ class QueryBuilderStorage implements Storage
 {
     private ?DatabaseSession $databaseSession = null;
     private bool $tableChecked = false;
-    private array $meta = [];
 
     public function __construct(
         private string $databaseUri,
@@ -62,19 +61,15 @@ class QueryBuilderStorage implements Storage
             ->executeQuery(
                 <<<SQL
                 SELECT
-                    meta.name,
-                    meta.labels,
-                    meta.help,
-                    array_agg(json_build_object('value', sample.value, 'labels', sample.labels)) AS samples
-                FROM ? meta
-                JOIN ? sample
-                    ON sample.name = meta.name
-                GROUP BY meta.name
+                    name, array_agg(json_build_object('value', value, 'labels', labels)) AS samples
+                FROM ? sample
+                GROUP BY name
                 SQL,
-                [$this->getTable('gauge_meta'), $this->getTable('gauge')]
+                [$this->getTable('gauge')]
             )
-            ->setHydrator(function (ResultRow $row) {
+            ->setHydrator(function (ResultRow $row) use ($schema) {
                 $name = $row->get('name', 'string');
+                $meta = $schema->getGauge($name);
 
                 $samples = [];
                 foreach ($row->get('samples', 'string[]') as $data) {
@@ -84,9 +79,9 @@ class QueryBuilderStorage implements Storage
 
                 return new SampleCollection(
                     name: $name,
-                    help: $row->get('help', 'string') ?? $name,
+                    help: $meta->getHelp(),
                     type: 'gauge',
-                    labelNames: $row->get('labels', 'string[]'),
+                    labelNames: $meta->getLabelNames(),
                     samples: $samples,
                 );
             })
@@ -97,19 +92,15 @@ class QueryBuilderStorage implements Storage
             ->executeQuery(
                 <<<SQL
                 SELECT
-                    meta.name,
-                    meta.labels,
-                    meta.help,
-                    array_agg(json_build_object('value', sample.value, 'labels', sample.labels)) AS samples
-                FROM ? meta
-                JOIN ? sample
-                    ON sample.name = meta.name
-                GROUP BY meta.name
+                    name, array_agg(json_build_object('value', value, 'labels', labels)) AS samples
+                FROM ? sample
+                GROUP BY name
                 SQL,
-                [$this->getTable('counter_meta'), $this->getTable('counter')]
+                [$this->getTable('counter')]
             )
-            ->setHydrator(function (ResultRow $row) {
+            ->setHydrator(function (ResultRow $row) use ($schema) {
                 $name = $row->get('name', 'string');
+                $meta = $schema->getCounter($name);
 
                 $samples = [];
                 foreach ($row->get('samples', 'string[]') as $data) {
@@ -119,9 +110,9 @@ class QueryBuilderStorage implements Storage
 
                 return new SampleCollection(
                     name: $name,
-                    help: $row->get('help', 'string') ?? $name,
+                    help: $meta->getHelp(),
                     type: 'counter',
-                    labelNames: $row->get('labels', 'string[]'),
+                    labelNames: $meta->getLabelNames(),
                     samples: $samples,
                 );
             })
@@ -131,23 +122,16 @@ class QueryBuilderStorage implements Storage
         $result = $databaseSession->executeQuery(
             <<<SQL
             SELECT
-                meta.name,
-                meta.labels,
-                meta.help,
-                meta.quantiles,
-                meta.max_age_seconds,
-                array_agg(json_build_object('value', sample.value, 'labels', sample.labels)) AS samples
-            FROM ? meta
-            JOIN ? sample
-                ON sample.name = meta.name
-            GROUP BY meta.name
+                name, array_agg(json_build_object('value', value, 'labels', labels)) AS samples
+            FROM ? sample
+            GROUP BY name
             SQL,
-            [$this->getTable('summary_meta'), $this->getTable('summary')]
+            [$this->getTable('summary')]
         );
 
         foreach ($result as $row) {
             $name = $row->get('name', 'string');
-            $quantiles = $row->get('quantiles', 'float[]') ?? SummaryMeta::getDefaultQuantiles();
+            $meta = $schema->getSummary($name);
 
             // First aggregate all values.
             $values = [];
@@ -158,12 +142,12 @@ class QueryBuilderStorage implements Storage
             }
 
             // Then compute quantiles and build sample list.
-            $samples = (function () use ($name, $values, $quantiles) {
+            $samples = (function () use ($name, $values, $meta) {
                 foreach ($values as $key => $values) {
                     $labels = \explode(':', $key);
                     \sort($values);
 
-                    foreach ($quantiles as $quantile) {
+                    foreach ($meta->getQuantiles() as $quantile) {
                         // Compute quantiles and set a summary sample in list for
                         // each computed quantile.
                         yield (new SummaryOutput($name, $labels, [], SummaryMeta::computeQuantiles($values, $quantile), $quantile));
@@ -176,9 +160,9 @@ class QueryBuilderStorage implements Storage
 
             yield new SampleCollection(
                 name: $name,
-                help: $row->get('help', 'string') ?? $name,
+                help: $meta->getHelp(),
                 type: 'summary',
-                labelNames: $row->get('labels', 'string[]'),
+                labelNames: $meta->getLabelNames(),
                 samples: $samples,
             );
         }
@@ -195,7 +179,6 @@ class QueryBuilderStorage implements Storage
         $databaseSession = $this->getDatabaseSession();
 
         $counterItems = $gaugeItems = $summaryItems = [];
-        $counterMeta = $gaugeMeta = $summaryMeta = [];
 
         foreach ($samples as $sample) {
             \assert($sample instanceof Sample);
@@ -206,14 +189,6 @@ class QueryBuilderStorage implements Storage
             if ($sample instanceof Counter) {
                 $meta = $schema->getCounter($name);
 
-                if (!\array_key_exists($name, $counterMeta)) {
-                    $counterMeta[$name] = ExpressionFactory::row([
-                        $namespacedName,
-                        ExpressionFactory::value($meta->getLabelNames(), 'text[]'),
-                        $meta->getHelp(),
-                    ]);
-                }
-
                 $counterItems[] = ExpressionFactory::row([
                     $namespacedName,
                     ExpressionFactory::value($labelValues, 'text[]'),
@@ -223,14 +198,6 @@ class QueryBuilderStorage implements Storage
             } else if ($sample instanceof Gauge) {
                 $meta = $schema->getGauge($name);
 
-                if (!\array_key_exists($name, $gaugeMeta)) {
-                    $gaugeMeta[$name] = ExpressionFactory::row([
-                        $namespacedName,
-                        ExpressionFactory::value($meta->getLabelNames(), 'text[]'),
-                        $meta->getHelp(),
-                    ]);
-                }
-
                 $gaugeItems[] = ExpressionFactory::row([
                     $namespacedName,
                     ExpressionFactory::value($labelValues, 'text[]'),
@@ -239,16 +206,6 @@ class QueryBuilderStorage implements Storage
                 ]);
             } else if ($sample instanceof Summary) {
                 $meta = $schema->getSummary($name);
-
-                if (!\array_key_exists($name, $summaryMeta)) {
-                    $summaryMeta[$name] = ExpressionFactory::row([
-                        $namespacedName,
-                        ExpressionFactory::value($meta->getLabelNames(), 'text[]'),
-                        $meta->getHelp(),
-                        $meta->getMaxAge(),
-                        ExpressionFactory::value($meta->getQuantiles(), 'float[]'),
-                    ]);
-                }
 
                 foreach ($sample->getValues() as $sampleValue) {
                     $validUntil = $sampleValue->measuredAt->add(new \DateInterval(\sprintf('PT%dS', $meta->getMaxAge())));
@@ -266,23 +223,6 @@ class QueryBuilderStorage implements Storage
         }
 
         if ($counterItems) {
-            $databaseSession->executeStatement(
-                <<<SQL
-                INSERT INTO ? (
-                    "name", "labels", "help"
-                )
-                ?
-                ON CONFLICT ("name")
-                    DO UPDATE SET
-                        "labels" = excluded."labels",
-                        "help" = excluded."help"
-                SQL,
-                [
-                    $this->getTable('counter_meta'),
-                    ExpressionFactory::constantTable($counterMeta),
-                ]
-            );
-
             $databaseSession->executeStatement(
                 <<<SQL
                 INSERT INTO ? (
@@ -305,23 +245,6 @@ class QueryBuilderStorage implements Storage
             $databaseSession->executeStatement(
                 <<<SQL
                 INSERT INTO ? (
-                    "name", "labels", "help"
-                )
-                ?
-                ON CONFLICT ("name")
-                    DO UPDATE SET
-                        "labels" = excluded."labels",
-                        "help" = excluded."help"
-                SQL,
-                [
-                    $this->getTable('gauge_meta'),
-                    ExpressionFactory::constantTable($gaugeMeta),
-                ]
-            );
-
-            $databaseSession->executeStatement(
-                <<<SQL
-                INSERT INTO ? (
                     "name", "labels", "value", "updated"
                 ) 
                 ?
@@ -338,25 +261,6 @@ class QueryBuilderStorage implements Storage
         }
 
         if ($summaryItems) {
-            $databaseSession->executeStatement(
-                <<<SQL
-                INSERT INTO ? (
-                    "name", "labels", "help", "max_age_seconds", "quantiles"
-                )
-                ?
-                ON CONFLICT ("name")
-                    DO UPDATE SET
-                        "labels" = excluded."labels",
-                        "help" = excluded."help",
-                        "max_age_seconds" = excluded."max_age_seconds",
-                        "quantiles" = excluded."quantiles"
-                SQL,
-                [
-                    $this->getTable('summary_meta'),
-                    ExpressionFactory::constantTable($summaryMeta),
-                ]
-            );
-
             $databaseSession->executeStatement(
                 <<<SQL
                 INSERT INTO ? (
@@ -435,14 +339,6 @@ class QueryBuilderStorage implements Storage
         }
 
         $tables = [
-            'counter_meta' => <<<SQL
-                CREATE TABLE IF NOT EXISTS ? (
-                    "name" text NOT NULL,
-                    "labels" text[] DEFAULT NULL,
-                    "help" text DEFAULT NULL,
-                    PRIMARY KEY ("name")
-                )
-                SQL,
             'counter' => <<<SQL
                 CREATE TABLE IF NOT EXISTS ? (
                     "name" text NOT NULL,
@@ -452,14 +348,6 @@ class QueryBuilderStorage implements Storage
                     PRIMARY KEY ("name", "labels")
                 )
                 SQL,
-            'gauge_meta' => <<<SQL
-                CREATE TABLE IF NOT EXISTS ? (
-                    "name" text NOT NULL,
-                    "labels" text[] DEFAULT NULL,
-                    "help" text DEFAULT NULL,
-                    PRIMARY KEY ("name")
-                )
-                SQL,
             'gauge' => <<<SQL
                 CREATE TABLE IF NOT EXISTS ? (
                     "name" text NOT NULL,
@@ -467,16 +355,6 @@ class QueryBuilderStorage implements Storage
                     "value" float NOT NULL DEFAULT 0,
                     "updated" timestamp with time zone NOT NULL,
                     PRIMARY KEY ("name", "labels")
-                )
-                SQL,
-            'summary_meta' => <<<SQL
-                CREATE TABLE IF NOT EXISTS ? (
-                    "name" text NOT NULL,
-                    "labels" text[] DEFAULT NULL,
-                    "help" text DEFAULT NULL,
-                    "max_age_seconds" int NOT NULL DEFAULT 600,
-                    "quantiles" float[] NOT NULL,
-                    PRIMARY KEY ("name")
                 )
                 SQL,
             'summary' => <<<SQL

@@ -110,7 +110,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
 
             $this->profiler->exitContext();
         } finally {
-            $timer?->stop();
+            $timer?->stop(); // @phpstan-ignore-line
         }
     }
 
@@ -155,7 +155,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
 
             $this->profiler->exitContext();
         } finally {
-            $timer?->stop();
+            $timer?->stop(); // @phpstan-ignore-line
         }
     }
 }
