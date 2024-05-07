@@ -225,7 +225,7 @@ final class ProfilingExtension extends Extension
             $tracingDecoratorDefinition = new Definition();
             $tracingDecoratorDefinition->setClass(TracingProfilerDecorator::class);
             $tracingDecoratorDefinition->setArguments([new Reference('.inner'), $handlerReferences, $handlerChannelMap]);
-            $tracingDecoratorDefinition->setDecoratedService(Profiler::class);
+            $tracingDecoratorDefinition->setDecoratedService('profiling.profiler');
             $container->setDefinition(TracingProfilerDecorator::class, $tracingDecoratorDefinition);
         }
 

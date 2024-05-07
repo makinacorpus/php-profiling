@@ -2,7 +2,9 @@
 # Profiling configuration file, complete, will all default values.
 #
 # You may either copy/paste this file in your configuration then modify it
-# or simply create an empty file and override only what you need.
+# or simply create an empty file and override only what you need. The only
+# part where values are not defaults is the "handlers" section, which is
+# empty per default. 
 #
 # Profiling is enabled by default, this means that all timers you start are
 # kept in memory until it is flushed.
