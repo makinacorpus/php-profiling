@@ -29,9 +29,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
         private ?Matcher $ignoredRoutes = null,
         private array $ignoredMethods = ['OPTION'],
         private ?SysInfoCollector $sysInfoCollector = null,
-    ) {
-        ($this->ignoredRoutes ??= new Matcher())->addPattern('prometheus_metrics');
-    }
+    ) {}
 
     #[\Override]
     public static function getSubscribedEvents()

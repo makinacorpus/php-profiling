@@ -7,7 +7,6 @@ namespace MakinaCorpus\Profiling\Bridge\Symfony\DependencyInjection;
 use MakinaCorpus\Profiling\Bridge\Symfony\Command\PrometheusSysInfoCommand;
 use MakinaCorpus\Profiling\Bridge\Symfony\Command\StoreClearCommand;
 use MakinaCorpus\Profiling\Helper\Matcher;
-use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\Profiler\TracingProfilerDecorator;
 use MakinaCorpus\Profiling\Prometheus\Collector\SysInfoCollector;
 use MakinaCorpus\Profiling\Prometheus\Schema\ArraySchema;
@@ -263,6 +262,7 @@ final class ProfilingExtension extends Extension
             foreach ($config['request_ignore_routes'] as $pattern) {
                 $matcher->addPattern($pattern);
             }
+            $matcher->addPattern('prometheus_metrics');
             $container->getDefinition('profiling.prometheus.matcher.route')->setArgument(0, $matcher->getCompiledRegex());
         }
         if (isset($config['console_ignore'])) {
