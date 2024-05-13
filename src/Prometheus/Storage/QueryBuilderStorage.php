@@ -69,7 +69,7 @@ class QueryBuilderStorage implements Storage
             )
             ->setHydrator(function (ResultRow $row) use ($schema) {
                 $name = $row->get('name', 'string');
-                $meta = $schema->getGauge($name);
+                $meta = $schema->getGauge($name, true);
 
                 $samples = [];
                 foreach ($row->get('samples', 'string[]') as $data) {
@@ -100,7 +100,7 @@ class QueryBuilderStorage implements Storage
             )
             ->setHydrator(function (ResultRow $row) use ($schema) {
                 $name = $row->get('name', 'string');
-                $meta = $schema->getCounter($name);
+                $meta = $schema->getCounter($name, true);
 
                 $samples = [];
                 foreach ($row->get('samples', 'string[]') as $data) {
@@ -131,7 +131,7 @@ class QueryBuilderStorage implements Storage
 
         foreach ($result as $row) {
             $name = $row->get('name', 'string');
-            $meta = $schema->getSummary($name);
+            $meta = $schema->getSummary($name, true);
 
             // First aggregate all values.
             $values = [];

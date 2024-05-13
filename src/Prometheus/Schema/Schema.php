@@ -36,6 +36,14 @@ abstract class Schema
         return $this->namespace;
     }
 
+    protected function getName(string $name, bool $stripNamespace = false): string
+    {
+        if ($stripNamespace && \str_starts_with($name, $this->namespace . '_')) {
+            return \substr($name, \strlen($this->namespace) + 1);
+        }
+        return $name;
+    }
+
     protected function registerCounter(CounterMeta $data): void
     {
         if ($this->debug) {
@@ -44,13 +52,17 @@ abstract class Schema
         $this->counters[$data->getName()] = $data;
     }
 
-    public function hasCounter(string $name): bool
+    public function hasCounter(string $name, bool $stripNamespace = false): bool
     {
+        $name = $this->getName($name, $stripNamespace);
+
         return \array_key_exists($name, $this->counters);
     }
 
-    public function getCounter(string $name): CounterMeta
+    public function getCounter(string $name, bool $stripNamespace = false): CounterMeta
     {
+        $name = $this->getName($name, $stripNamespace);
+
         return $this->counters[$name] ?? new CounterMeta(name: $name, active: false);
     }
 
@@ -62,13 +74,17 @@ abstract class Schema
         $this->gauges[$data->getName()] = $data;
     }
 
-    public function hasGauge(string $name): bool
+    public function hasGauge(string $name, bool $stripNamespace = false): bool
     {
+        $name = $this->getName($name, $stripNamespace);
+
         return \array_key_exists($name, $this->gauges);
     }
 
-    public function getGauge(string $name): GaugeMeta
+    public function getGauge(string $name, bool $stripNamespace = false): GaugeMeta
     {
+        $name = $this->getName($name, $stripNamespace);
+
         return $this->gauges[$name] ?? new GaugeMeta(name: $name, active: false);
     }
 
@@ -80,13 +96,17 @@ abstract class Schema
         $this->summaries[$data->getName()] = $data;
     }
 
-    public function hasSummary(string $name): bool
+    public function hasSummary(string $name, bool $stripNamespace = false): bool
     {
+        $name = $this->getName($name, $stripNamespace);
+
         return \array_key_exists($name, $this->summaries);
     }
 
-    public function getSummary(string $name): SummaryMeta
+    public function getSummary(string $name, bool $stripNamespace = false): SummaryMeta
     {
+        $name = $this->getName($name, $stripNamespace);
+
         return $this->summaries[$name] ?? new SummaryMeta(name: $name, active: false);
     }
 
@@ -98,13 +118,17 @@ abstract class Schema
         $this->histograms[$data->getName()] = $data;
     }
 
-    public function hasHistogram(string $name): bool
+    public function hasHistogram(string $name, bool $stripNamespace = false): bool
     {
+        $name = $this->getName($name, $stripNamespace);
+
         return \array_key_exists($name, $this->histograms);
     }
 
-    public function getHistogram(string $name): HistogramMeta
+    public function getHistogram(string $name, bool $stripNamespace = false): HistogramMeta
     {
+        $name = $this->getName($name, $stripNamespace);
+
         return $this->histograms[$name] ?? new HistogramMeta(name: $name, active: false);
     }
 }
