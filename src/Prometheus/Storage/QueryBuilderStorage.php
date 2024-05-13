@@ -21,37 +21,20 @@ use MakinaCorpus\QueryBuilder\Result\ResultRow;
 use MakinaCorpus\QueryBuilder\TableExpression;
 use MakinaCorpus\QueryBuilder\Vendor;
 
-/**
- * The right schema is first, some meta information, such as:
- *     # HELP node_scrape_collector_duration_seconds node_exporter: Duration of a collector scrape.
- *     # TYPE node_scrape_collector_duration_seconds gauge
- * Then, some values:
- *     node_scrape_collector_duration_seconds{collector="arp"} 0.000121002
- *     node_scrape_collector_duration_seconds{collector="bcache"} 1.5697e-05
- *     node_scrape_collector_duration_seconds{collector="bonding"} 3.1096e-05
- *     node_scrape_collector_duration_seconds{collector="btrfs"} 0.001315575
- *
- * For all counters, we will store a single line for all samples their metadata
- * along the value. For "counter" and "gauge", this is trivial since there is
- * always only a single value.
- *
- * Considering "summary" and "histogram", value is more complex, but we still
- * will store a single line.
- */
-class QueryBuilderStorage implements Storage
+class QueryBuilderStorage extends AbstractStorage
 {
     private ?DatabaseSession $databaseSession = null;
     private bool $tableChecked = false;
 
     public function __construct(
         private string $databaseUri,
-        private string $tableName = 'public.prometheus_metrics'
+        private string $tableName = 'public.prometheus_metrics',
     ) {}
 
     #[\Override]
     public function collect(Schema $schema): iterable
     {
-        $this->checkTable();
+        $this->checkSchema();
         $this->cleanOutdatedSamples();
 
         $databaseSession = $this->getDatabaseSession();
@@ -175,7 +158,7 @@ class QueryBuilderStorage implements Storage
             return;
         }
 
-        $this->checkTable();
+        $this->checkSchema();
         $databaseSession = $this->getDatabaseSession();
 
         $counterItems = $gaugeItems = $summaryItems = [];
@@ -279,7 +262,7 @@ class QueryBuilderStorage implements Storage
     #[\Override]
     public function cleanOutdatedSamples(): void
     {
-        $this->checkTable();
+        $this->checkSchema();
 
         $this->getDatabaseSession()->executeStatement(
             <<<SQL
@@ -294,7 +277,7 @@ class QueryBuilderStorage implements Storage
     #[\Override]
     public function wipeOutData(): void
     {
-        $this->checkTable();
+        $this->checkSchema();
 
         try {
             $this
@@ -307,26 +290,8 @@ class QueryBuilderStorage implements Storage
         }
     }
 
-    /**
-     * Get database session.
-     */
-    private function getDatabaseSession(): DatabaseSession
-    {
-        return $this->databaseSession ??= BridgeFactory::create($this->databaseUri);
-    }
-
-    /**
-     * Get table name.
-     */
-    private function getTable(?string $suffix = null): TableExpression
-    {
-        return ExpressionFactory::table($suffix ? $this->tableName . '_' . $suffix : $this->tableName);
-    }
-
-    /**
-     * Ensure tables exists.
-     */
-    private function checkTable(): void
+    #[\Override]
+    protected function doEnsureSchema(): void
     {
         if ($this->tableChecked) {
             return;
@@ -379,5 +344,21 @@ class QueryBuilderStorage implements Storage
                 throw new StorageError($e->getMessage(), $e->getCode(), $e);
             }
         }
+    }
+
+    /**
+     * Get database session.
+     */
+    private function getDatabaseSession(): DatabaseSession
+    {
+        return $this->databaseSession ??= BridgeFactory::create($this->databaseUri);
+    }
+
+    /**
+     * Get table name.
+     */
+    private function getTable(?string $suffix = null): TableExpression
+    {
+        return ExpressionFactory::table($suffix ? $this->tableName . '_' . $suffix : $this->tableName);
     }
 }

@@ -1,8 +1,10 @@
 parameters:
     env(PROFILING_ENABLED): "1"
-    env(PROFILING_PROMOTHEUS_ENABLED): "0"
     env(PROFILING_PROMETHEUS_ACCESS_TOKEN): ~
+    env(PROFILING_PROMOTHEUS_ENABLED): "0"
+    env(PROFILING_PROMETHEUS_SCHEMA_AUTOCREATE): "0"
     profiling.prometheus.sample_logger.max_size: 100
+    profiling.prometheus.schema_autocreate: "%env(bool:PROFILING_PROMETHEUS_SCHEMA_AUTOCREATE)%"
     # New ones will be overriden by extension.
     profiling.prometheus.namespace: symfony
     profiling.prometheus.request_ignored_methods: ['OPTION']

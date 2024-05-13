@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MakinaCorpus\Profiling\Bridge\Symfony\DependencyInjection;
 
+use MakinaCorpus\Profiling\Bridge\Symfony\Command\PrometheusCreateSchemaCommand;
 use MakinaCorpus\Profiling\Bridge\Symfony\Command\PrometheusSysInfoCommand;
 use MakinaCorpus\Profiling\Bridge\Symfony\Command\StoreClearCommand;
 use MakinaCorpus\Profiling\Helper\Matcher;
@@ -282,6 +283,9 @@ final class ProfilingExtension extends Extension
             default => throw new InvalidArgumentException(\sprintf("Storage '%s' is not a supported storage.", $storageType)),
         };
 
+        \assert($storageDefinition instanceof Definition);
+        $storageDefinition->addMethodCall('toggleAutoSchemaCreate', [new Parameter('profiling.prometheus.schema_autocreate')]);
+
         $container->removeDefinition('profiling.prometheus.storage');
         $container->setDefinition('profiling.prometheus.storage', $storageDefinition);
 
@@ -292,7 +296,7 @@ final class ProfilingExtension extends Extension
         }
     }
 
-    private function registerPrometheusSysInfo(array $config, ContainerBuilder $container)
+    private function registerPrometheusSysInfo(array $config, ContainerBuilder $container): void
     {
         $disks = [];
         if (!empty($config['disk_size'])) {
@@ -318,14 +322,22 @@ final class ProfilingExtension extends Extension
         ]);
         $container->setDefinition('profiling.prometheus.sys_info_collector', $definition);
 
-        // Add related command as well.
-        $commandDef = new Definition();
-        $commandDef->setClass(PrometheusSysInfoCommand::class);
-        $commandDef->setArguments([
+        // Add related commands as well.
+        $definition = new Definition();
+        $definition->setClass(PrometheusCreateSchemaCommand::class);
+        $definition->setArguments([
+            new Reference('profiling.prometheus.storage'),
+        ]);
+        $definition->addTag('console.command');
+        $container->setDefinition(PrometheusCreateSchemaCommand::class, $definition);
+
+        $definition = new Definition();
+        $definition->setClass(PrometheusSysInfoCommand::class);
+        $definition->setArguments([
             new Reference('profiling.prometheus.sys_info_collector'),
         ]);
-        $commandDef->addTag('console.command');
-        $container->setDefinition(PrometheusSysInfoCommand::class, $commandDef);
+        $definition->addTag('console.command');
+        $container->setDefinition(PrometheusSysInfoCommand::class, $definition);
     }
 
     private function getPrometheusDefaultSchemaAsArray(ContainerBuilder $container): array

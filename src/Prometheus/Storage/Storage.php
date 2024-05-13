@@ -37,4 +37,16 @@ interface Storage
      * Delete all.
      */
     public function wipeOutData(): void;
+
+    /**
+     * Enable to disable automatic schema creation.
+     *
+     * If not called, it must be disabled per default.
+     */
+    public function toggleAutoSchemaCreate(bool $toggle = true): void;
+
+    /**
+     * Create schema if not already created, do nothing otherwise.
+     */
+    public function ensureSchema(): void;
 }

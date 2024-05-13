@@ -22,6 +22,8 @@ function makes this API being suitable for running discretly in production.
 
 # Setup
 
+## Installation
+
 Simply run:
 
 ```sh
@@ -53,6 +55,23 @@ Then copy the `src/Bridge/Symfony/Resources/packages/profiling.yaml` in this
 package in the `config/packages/` directory. You may read it and modify
 following your needs. All configuration options are documented within the
 sample configuration file itself.
+
+## Storage configuration
+
+Default storage is a PostgreSQL database implementation that uses
+`makinacorpus/query-builder` for writing SQL queries.
+
+It can create automatically the missing tables at runtime, although this
+unperformant and disabled per default. In order to allow automatic table
+creation, you can set the `PROFILING_PROMETHEUS_SCHEMA_AUTOCREATE=1`
+environment variable.
+
+Recommended method is to run the `profiling:prometheus:create-schema` console
+command at least once:
+
+```sh
+php bin/console profiling:prometheus:create-schema
+```
 
 # Usage
 

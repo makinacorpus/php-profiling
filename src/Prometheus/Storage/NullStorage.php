@@ -28,4 +28,14 @@ class NullStorage implements Storage
     public function wipeOutData(): void
     {
     }
+
+    #[\Override]
+    public function toggleAutoSchemaCreate(bool $toggle = true): void
+    {
+    }
+
+    #[\Override]
+    public function ensureSchema(): void
+    {
+    }
 }
