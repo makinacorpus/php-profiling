@@ -12,6 +12,7 @@ use MakinaCorpus\Profiling\Profiler\TracingProfilerDecorator;
 use MakinaCorpus\Profiling\Prometheus\Collector\SysInfoCollector;
 use MakinaCorpus\Profiling\Prometheus\Schema\ArraySchema;
 use MakinaCorpus\Profiling\Prometheus\Storage\QueryBuilderStorage;
+use MakinaCorpus\Profiling\Prometheus\Storage\RedisStorage;
 use MakinaCorpus\Profiling\Timer\Handler\NamedTraceHandler;
 use MakinaCorpus\Profiling\Timer\Handler\SentryHandler;
 use MakinaCorpus\Profiling\Timer\Handler\StoreHandler;
@@ -403,7 +404,19 @@ final class ProfilingExtension extends Extension
 
     private function registerPrometheusStorageRedis(ContainerBuilder $container, ?string $uri, array $options): Definition
     {
-        throw new InvalidArgumentException("Not implemented yet.");
+        if (!$uri) {
+            throw new InvalidArgumentException("Storage 'redis' requires a redis URI.");
+        }
+
+        // @todo Handle existing connection when there is.
+        $definition = new Definition();
+        $definition->setClass(RedisStorage::class);
+        $definition->setArgument(0, $uri);
+        if ($options['prefix']) {
+            $definition->setArgument(1, $options['prefix']);
+        }
+
+        return $definition;
     }
 
     #[\Override]

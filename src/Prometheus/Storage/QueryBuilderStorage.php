@@ -170,8 +170,6 @@ class QueryBuilderStorage extends AbstractStorage
             $labelValues = $sample->labelValues;
 
             if ($sample instanceof Counter) {
-                $meta = $schema->getCounter($name);
-
                 $counterItems[] = ExpressionFactory::row([
                     $namespacedName,
                     ExpressionFactory::value($labelValues, 'text[]'),
@@ -179,8 +177,6 @@ class QueryBuilderStorage extends AbstractStorage
                     $sample->measuredAt,
                 ]);
             } else if ($sample instanceof Gauge) {
-                $meta = $schema->getGauge($name);
-
                 $gaugeItems[] = ExpressionFactory::row([
                     $namespacedName,
                     ExpressionFactory::value($labelValues, 'text[]'),
@@ -201,7 +197,7 @@ class QueryBuilderStorage extends AbstractStorage
                     ]);
                 }
             } else {
-                \trigger_error(\sprintf("Sample of type '%s' is not supported.", \get_class($sample)));
+                \trigger_error(\sprintf("Sample of type '%s' is not supported.", \get_class($sample)), E_USER_WARNING);
             }
         }
 
