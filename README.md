@@ -265,20 +265,29 @@ profiling:
             # percentiles. Summaries are computed on the client side (ie.
             # your site) in opposition to histograms which are computed on
             # the service (ie. in Prometheus).
+            # You may or may not define quantiles, in this example we define
+            # the defaults being applied if none providen.
             some_summary:
                 type: summary
                 help: Some summary
                 labels: [action, method, foo]
+                quantiles: [0.01, 0.05, 0.5, 0.95, 0.99]
 
             # Histogram is a statistical distribution analysis of some value
             # using buckets. Buckets are supposed to be pre-defined in this
             # schema. Histograms are computed in the server side (ie. in
             # Prometheus) in opposition to summaries which are computed on
             # the client side (ie. your site).
+            # You may or may not define buckets, in this example we define
+            # the defaults being applied if none providen.
+            # It is strongly recommended, for histogram usage, that you define
+            # explicitely your own buckets depending on expected values for
+            # each sample definition.
             some_histogram:
                 type: histogram
                 help: request durations in milliseconds
                 labels: [action, method, foo]
+                buckets: [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0]
 ```
 
 Then, at the point in code where you need to profile, inject the
@@ -364,9 +373,47 @@ try {
 Of course, you could measure something else than a duration, any value
 which yield some meanings to you can be added to summaries.
 
+Important note: histogram are much more performant to use than summaries
+in both output rendering and storage. Avoid summaries when you know in
+advance expected values span.
+
 #### Histogram
 
-Histograms are not implemented yet.
+Use the `histogram` method in conjonction with a timer:
+
+```php
+\assert($profiler instanceof \MakinaCorpus\Profiling\Profiler);
+
+try {
+    $timer = $profiler->timer();
+
+    // Something happens, then...
+} finally {
+    if ($timer) {
+        $duration = $timer->getElapsedTime();
+
+        $profiler->histogram(
+            'something_duration_msec',
+            // Label values, considering you kept "action" and "method"
+            // in the (action, method, foo) list:
+            [
+                $profiler->getContext()->route,
+                $profiler->getContext()->method,
+                'some_value',
+            ],
+            // Arbitrary value you actually measure.
+            $duration,
+        );
+    }
+}
+```
+
+Of course, you could measure something else than a duration, any value
+which yield some meanings to you can be added to summaries.
+
+Important note: histogram are much more performant to use than summaries
+in both output rendering and storage. Always prefer histogram over summary
+when when you know in advance expected values span.
 
 ### Exposed metrics
 
