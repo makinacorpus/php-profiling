@@ -6,6 +6,7 @@ namespace MakinaCorpus\Profiling;
 
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Histogram;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 
 interface Profiler
@@ -74,9 +75,14 @@ interface Profiler
     public function gauge(string $name, array $labelValues, ?float $value = null): Gauge;
 
     /**
+     * Set one or more prometheus histogram sample values.
+     */
+    public function histogram(string $name, array $labelValues, int|float ...$values): Histogram;
+
+    /**
      * Set one or more prometheus summary sample values.
      */
-    public function summary(string $name, array $labelValues, float ...$values): Summary;
+    public function summary(string $name, array $labelValues, int|float ...$values): Summary;
 
     /**
      * Manually flush (stop all timers, send sample data to storage).

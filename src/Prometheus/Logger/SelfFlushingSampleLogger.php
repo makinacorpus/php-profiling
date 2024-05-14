@@ -6,6 +6,7 @@ namespace MakinaCorpus\Profiling\Prometheus\Logger;
 
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Histogram;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 
 /**
@@ -62,8 +63,15 @@ class SelfFlushingSampleLogger implements SampleLogger
         }
     }
 
-    // #[\Override]
-    // public function histogram(string $name, array $labelValues, float ...$values): HistogramSample;
+    #[\Override]
+    public function histogram(string $name, array $labelValues, float|int ...$values): Histogram
+    {
+        try {
+            return $this->decorated->histogram($name, $labelValues, ...$values);
+        } finally {
+            $this->flushIfMaxSizeExceeded();
+        }
+    }
 
     #[\Override]
     public function flush(): void

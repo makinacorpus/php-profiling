@@ -9,6 +9,7 @@ use MakinaCorpus\Profiling\Prometheus\Logger\NullSampleLogger;
 use MakinaCorpus\Profiling\Prometheus\Logger\SampleLogger;
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Histogram;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 use MakinaCorpus\Profiling\RequestContext;
 use MakinaCorpus\Profiling\Timer;
@@ -130,7 +131,13 @@ final class DefaultProfiler implements Profiler
     }
 
     #[\Override]
-    public function summary(string $name, array $labelValues, float ...$values): Summary
+    public function histogram(string $name, array $labelValues, int|float ...$values): Histogram
+    {
+        return $this->getSampleLogger()->histogram($name, $labelValues, ...$values);
+    }
+
+    #[\Override]
+    public function summary(string $name, array $labelValues, int|float ...$values): Summary
     {
         return $this->getSampleLogger()->summary($name, $labelValues, ...$values);
     }

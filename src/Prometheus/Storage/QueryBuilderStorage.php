@@ -9,6 +9,7 @@ use MakinaCorpus\Profiling\Prometheus\Output\SampleCollection;
 use MakinaCorpus\Profiling\Prometheus\Output\SummaryOutput;
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Histogram;
 use MakinaCorpus\Profiling\Prometheus\Sample\Sample;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 use MakinaCorpus\Profiling\Prometheus\Schema\Schema;
@@ -161,7 +162,7 @@ class QueryBuilderStorage extends AbstractStorage
         $this->checkSchema();
         $databaseSession = $this->getDatabaseSession();
 
-        $counterItems = $gaugeItems = $summaryItems = [];
+        $counterItems = $gaugeItems = $histogramItems = $summaryItems = [];
 
         foreach ($samples as $sample) {
             \assert($sample instanceof Sample);
@@ -170,31 +171,50 @@ class QueryBuilderStorage extends AbstractStorage
             $labelValues = $sample->labelValues;
 
             if ($sample instanceof Counter) {
-                $counterItems[] = ExpressionFactory::row([
+                $counterItems[] = [
                     $namespacedName,
                     ExpressionFactory::value($labelValues, 'text[]'),
                     $sample->getValue(),
                     $sample->measuredAt,
-                ]);
+                ];
             } else if ($sample instanceof Gauge) {
-                $gaugeItems[] = ExpressionFactory::row([
+                $gaugeItems[] = [
                     $namespacedName,
                     ExpressionFactory::value($labelValues, 'text[]'),
                     $sample->getValue(),
                     $sample->measuredAt,
-                ]);
+                ];
+            } else if ($sample instanceof Histogram) {
+                $meta = $schema->getHistogram($name);
+                $id = $sample->getUniqueId();
+
+                foreach ($sample->getValues() as $sampleValue) {
+                    $bucket = $meta->findBucketFor($sampleValue->value);
+                    $itemId = $id . $bucket;
+
+                    if (\array_key_exists($itemId, $histogramItems)) {
+                        $histogramItems[$itemId][3] += 1;
+                    } else {
+                        $histogramItems[$itemId] = [
+                            $namespacedName,
+                            ExpressionFactory::value($labelValues, 'text[]'),
+                            $bucket,
+                            1,
+                        ];
+                    }
+                }
             } else if ($sample instanceof Summary) {
                 $meta = $schema->getSummary($name);
 
                 foreach ($sample->getValues() as $sampleValue) {
                     $validUntil = $sampleValue->measuredAt->add(new \DateInterval(\sprintf('PT%dS', $meta->getMaxAge())));
 
-                    $summaryItems[] = ExpressionFactory::row([
+                    $summaryItems[] = [
                         $namespacedName,
                         ExpressionFactory::value($labelValues, 'text[]'),
                         $sampleValue->value,
                         $validUntil,
-                    ]);
+                    ];
                 }
             } else {
                 \trigger_error(\sprintf("Sample of type '%s' is not supported.", \get_class($sample)), E_USER_WARNING);
@@ -225,7 +245,7 @@ class QueryBuilderStorage extends AbstractStorage
                 <<<SQL
                 INSERT INTO ? (
                     "name", "labels", "value", "updated"
-                ) 
+                )
                 ?
                 ON CONFLICT ("name", "labels")
                     DO UPDATE SET
@@ -234,7 +254,25 @@ class QueryBuilderStorage extends AbstractStorage
                 [
                     $this->getTable('gauge'),
                     ExpressionFactory::constantTable($gaugeItems),
-                    ExpressionFactory::raw('current_timestamp'),
+                ]
+            );
+        }
+
+        if ($histogramItems) {
+            $databaseSession->executeStatement(
+                <<<SQL
+                INSERT INTO ? (
+                    "name", "labels", "bucket", "count"
+                )
+                ?
+                ON CONFLICT ("name", "labels", "bucket")
+                    DO UPDATE SET
+                        "count" = ?."count" + excluded."count"
+                SQL,
+                [
+                    $this->getTable('histogram'),
+                    ExpressionFactory::constantTable($histogramItems),
+                    $this->getTable('histogram'),
                 ]
             );
         }
@@ -324,6 +362,15 @@ class QueryBuilderStorage extends AbstractStorage
                     "labels" text[] DEFAULT NULL,
                     "value" float,
                     "valid_until" timestamp with time zone NOT NULL
+                )
+                SQL,
+            'histogram' => <<<SQL
+                CREATE TABLE IF NOT EXISTS ? (
+                    "name" text NOT NULL,
+                    "labels" text[] DEFAULT NULL,
+                    "bucket" text,
+                    "count" int DEFAULT 0,
+                    PRIMARY KEY ("name", "labels", "bucket")
                 )
                 SQL,
         ];

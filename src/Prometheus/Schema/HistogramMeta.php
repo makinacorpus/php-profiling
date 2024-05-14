@@ -4,6 +4,8 @@ declare (strict_types=1);
 
 namespace MakinaCorpus\Profiling\Prometheus\Schema;
 
+use MakinaCorpus\Profiling\Prometheus\Error\SchemaError;
+
 class HistogramMeta extends AbstractMeta
 {
     private array $buckets;
@@ -26,6 +28,30 @@ class HistogramMeta extends AbstractMeta
     }
 
     /**
+     * Create list of exponential buckets.
+     */
+    public static function getExponentialBuckets(float $start, float $growthFactor, int $numberOfBuckets): array
+    {
+        if ($start <= 0) {
+            throw new SchemaError('Starting position of a bucket set must be a positive integer.');
+        }
+        if ($growthFactor <= 1) {
+            throw new SchemaError('Growth factor must greater than 1.');
+        }
+        if ($numberOfBuckets < 1) {
+            throw new SchemaError('Number of buckets in set must be a positive integer.');
+        }
+
+        $ret = [];
+        for ($i = 0; $i < $numberOfBuckets; $i++) {
+            $ret[$i] = $start;
+            $start *= $growthFactor;
+        }
+
+        return $ret;
+    }
+
+    /**
      * List of default buckets.
      */
     public static function getDefaultBuckets(): array
@@ -41,5 +67,18 @@ class HistogramMeta extends AbstractMeta
     public function getBuckets(): array
     {
         return $this->buckets;
+    }
+
+    /**
+     * Find bucket for the given value.
+     */
+    public function findBucketFor(int|float $value): float|string
+    {
+        foreach ($this->buckets as $bucket) {
+            if ($value <= $bucket) {
+                return $bucket;
+            }
+        }
+        return '+Inf';
     }
 }

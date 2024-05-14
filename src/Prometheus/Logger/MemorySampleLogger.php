@@ -6,6 +6,7 @@ namespace MakinaCorpus\Profiling\Prometheus\Logger;
 
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Histogram;
 use MakinaCorpus\Profiling\Prometheus\Sample\Sample;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 use MakinaCorpus\Profiling\Prometheus\Schema\Schema;
@@ -26,7 +27,7 @@ class MemorySampleLogger implements SampleLogger
     private array $gauges = [];
     /** @var Summary[] */
     private array $summaries = [];
-    /** @var Sample[] */
+    /** @var Histogram[] */
     private array $histograms = [];
 
     public function __construct(
@@ -105,6 +106,34 @@ class MemorySampleLogger implements SampleLogger
 
         $key = $meta->computeUniqueStorageKey($labelValues);
         $sample = $this->summaries[$key] ?? ($this->summaries[$key] = new Summary($name, $labelValues, []));
+        $this->size++;
+
+        foreach ($values as $value) {
+            $sample->add($value);
+        }
+
+        return $sample;
+    }
+
+    #[\Override]
+    public function histogram(string $name, array $labelValues, float|int ...$values): Histogram
+    {
+        $meta = $this->schema->getHistogram($name);
+
+        if (!$meta->isActive()) {
+            return new Histogram($name, [], []);
+        }
+
+        $labelValues = $meta->validateLabelValues($labelValues);
+        if (null === $labelValues) {
+            // Errors must remain silent in production.
+            return new Histogram($name, [], []);
+        }
+
+        $key = $meta->computeUniqueStorageKey($labelValues);
+        $sample = $this->histograms[$key] ?? ($this->histograms[$key] = new Histogram($name, $labelValues, []));
+        $this->size++;
+
         foreach ($values as $value) {
             $sample->add($value);
         }

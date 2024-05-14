@@ -7,6 +7,7 @@ namespace MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\Profiler;
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Histogram;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 use MakinaCorpus\Profiling\RequestContext;
 use MakinaCorpus\Profiling\Timer;
@@ -81,7 +82,13 @@ abstract class AbstractProfilerDecorator implements Profiler
     }
 
     #[\Override]
-    public function summary(string $name, array $labelValues, float ...$values): Summary
+    public function histogram(string $name, array $labelValues, int|float ...$values): Histogram
+    {
+        return $this->decorated->histogram($name, $labelValues, ...$values);
+    }
+
+    #[\Override]
+    public function summary(string $name, array $labelValues, int|float ...$values): Summary
     {
         return $this->decorated->summary($name, $labelValues, ...$values);
     }

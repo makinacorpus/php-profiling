@@ -6,6 +6,7 @@ namespace MakinaCorpus\Profiling\Prometheus\Logger;
 
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Histogram;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 
 /**
@@ -35,7 +36,7 @@ interface SampleLogger
     /**
      * Set one or more histogram values.
      */
-    // public function histogram(string $name, array $labelValues, float ...$values): HistogramSample;
+    public function histogram(string $name, array $labelValues, float|int ...$values): Histogram;
 
     /**
      * Send everything to storage and delete from memory.
