@@ -5,6 +5,13 @@ declare (strict_types=1);
 namespace MakinaCorpus\Profiling\Prometheus\Schema;
 
 use MakinaCorpus\Profiling\Prometheus\Error\SchemaError;
+use MakinaCorpus\Profiling\Prometheus\Output\HistogramOutput;
+use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
+use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Sample;
+
+// @todo IDE bug
+\class_exists(Sample::class);
 
 class HistogramMeta extends AbstractMeta
 {
@@ -67,6 +74,58 @@ class HistogramMeta extends AbstractMeta
     public function getBuckets(): array
     {
         return $this->buckets;
+    }
+
+    /**
+     * Create output samples from given values.
+     *
+     * It will get the user input values, and redispatch those into the buckets
+     * this class contains. Value distribution doesn't matter since only the
+     * total sum is returned.
+     *
+     * @todo This method is unperformant, but it works.
+     *
+     * @param array $input
+     *   Keys are bucket names, values is a two-value array whose values are
+     *   the count, and value sum. It may or may not contain a "+Inf" bucket.
+     *
+     * @return Sample[]
+     */
+    public function createOutput(string $name, array $labelValues, array $input): array
+    {
+        $rearranged = [];
+        $infCount = 0;
+        $sumTotal = 0;
+
+        foreach ($this->buckets as $originalBucket) {
+            $rearranged[$originalBucket] = 0;
+        }
+
+        foreach ($input as $bucket => $data) {
+            list ($count, $sum) = $data;
+
+            $sumTotal += $sum;
+            $infCount += $count;
+
+            if ('+Inf' !== $bucket) {
+                foreach ($this->buckets as $originalBucket) {
+                    if ($bucket <= $originalBucket) {
+                        $rearranged[$originalBucket] += $count;
+                    }
+                }
+            }
+        }
+
+        $ret = [];
+        foreach ($rearranged as $bucket => $count) {
+            $ret[] = new HistogramOutput($name, $labelValues, [], $count, $bucket);
+        }
+        $ret[] = new HistogramOutput($name, $labelValues, [], $infCount, '+Inf');
+
+        $ret[] = (new Counter($name . '_count', $labelValues, []))->increment($infCount);
+        $ret[] = (new Gauge($name . '_sum', $labelValues, []))->set($sumTotal);
+
+        return $ret;
     }
 
     /**

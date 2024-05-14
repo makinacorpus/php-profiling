@@ -9,7 +9,7 @@ use MakinaCorpus\Profiling\Prometheus\Sample\Sample;
 /**
  * This data structure is used for output/rendering only.
  */
-class SummaryOutput extends Sample
+class HistogramOutput extends Sample
 {
     public function __construct(
         /**
@@ -32,14 +32,14 @@ class SummaryOutput extends Sample
         array $channels,
 
         /**
-         * Computed value for the quantile.
+         * Count for the bucket.
          */
-        public readonly int|float $value,
+        public readonly int $count,
 
         /**
          * Quantile the value is associated to.
          */
-        public readonly int|float $quantile,
+        public readonly int|float|string $bucket,
     ) {
         parent::__construct($name, $labelValues, $channels);
     }

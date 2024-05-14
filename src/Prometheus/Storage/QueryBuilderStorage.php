@@ -5,6 +5,7 @@ declare (strict_types=1);
 namespace MakinaCorpus\Profiling\Prometheus\Storage;
 
 use MakinaCorpus\Profiling\Prometheus\Error\StorageError;
+use MakinaCorpus\Profiling\Prometheus\Output\HistogramOutput;
 use MakinaCorpus\Profiling\Prometheus\Output\SampleCollection;
 use MakinaCorpus\Profiling\Prometheus\Output\SummaryOutput;
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
@@ -102,54 +103,95 @@ class QueryBuilderStorage extends AbstractStorage
             })
         ;
 
-        // Summary.
-        $result = $databaseSession->executeQuery(
-            <<<SQL
-            SELECT
-                name, array_agg(json_build_object('value', value, 'labels', labels)) AS samples
-            FROM ? sample
-            GROUP BY name
-            SQL,
-            [$this->getTable('summary')]
-        );
+        // Histogram.
+        yield from $databaseSession
+            ->executeQuery(
+                <<<SQL
+                SELECT
+                    name, array_agg(json_build_object('count', count, 'bucket', bucket, 'value', value, 'labels', labels)) AS samples
+                FROM ? sample
+                GROUP BY name
+                SQL,
+                [$this->getTable('histogram')]
+            )
+            ->setHydrator(function (ResultRow $row) use ($schema) {
+                $name = $row->get('name', 'string');
+                $meta = $schema->getHistogram($name, true);
 
-        foreach ($result as $row) {
-            $name = $row->get('name', 'string');
-            $meta = $schema->getSummary($name, true);
-
-            // First aggregate all values.
-            $values = [];
-            foreach ($row->get('samples', 'string[]') as $data) {
-                $data = \json_decode($data, true);
-                $key = \implode(':', $data['labels']);
-                $values[$key][] = (int) $data['value'];
-            }
-
-            // Then compute quantiles and build sample list.
-            $samples = (function () use ($name, $values, $meta) {
-                foreach ($values as $key => $values) {
-                    $labels = \explode(':', $key);
-                    \sort($values);
-
-                    foreach ($meta->getQuantiles() as $quantile) {
-                        // Compute quantiles and set a summary sample in list for
-                        // each computed quantile.
-                        yield (new SummaryOutput($name, $labels, [], SummaryMeta::computeQuantiles($values, $quantile), $quantile));
-                    }
-
-                    yield (new Counter($name . '_count', $labels, []))->increment(\count($values));
-                    yield (new Gauge($name . '_sum', $labels, []))->set(\array_sum($values));
+                // First aggregate all counts.
+                $counts = [];
+                foreach ($row->get('samples', 'string[]') as $data) {
+                    $data = \json_decode($data, true);
+                    $key = \implode(':', $data['labels']);
+                    $counts[$key][$data['bucket']] = [(int) $data['count'], (float) $data['value']];
                 }
-            })();
 
-            yield new SampleCollection(
-                name: $name,
-                help: $meta->getHelp(),
-                type: 'summary',
-                labelNames: $meta->getLabelNames(),
-                samples: $samples,
-            );
-        }
+                // Re-arrange each labels unique histogram values in the bucket order.
+                $samples = (function () use ($name, $counts, $meta) {
+                    foreach ($counts as $key => $labelCounts) {
+                        yield from $meta->createOutput($name, \explode(':', $key), $labelCounts);
+                    }
+                })();
+
+                return new SampleCollection(
+                    name: $name,
+                    help: $meta->getHelp(),
+                    type: 'summary',
+                    labelNames: $meta->getLabelNames(),
+                    samples: $samples,
+                );
+            })
+        ;
+
+        // Summary.
+        yield from $databaseSession
+            ->executeQuery(
+                <<<SQL
+                SELECT
+                    name, array_agg(json_build_object('value', value, 'labels', labels)) AS samples
+                FROM ? sample
+                GROUP BY name
+                SQL,
+                [$this->getTable('summary')]
+            )
+            ->setHydrator(function (ResultRow $row) use ($schema) {
+                $name = $row->get('name', 'string');
+                $meta = $schema->getSummary($name, true);
+
+                // First aggregate all values.
+                $values = [];
+                foreach ($row->get('samples', 'string[]') as $data) {
+                    $data = \json_decode($data, true);
+                    $key = \implode(':', $data['labels']);
+                    $values[$key][] = (int) $data['value'];
+                }
+
+                // Then compute quantiles and build sample list.
+                $samples = (function () use ($name, $values, $meta) {
+                    foreach ($values as $key => $labelValues) {
+                        $labels = \explode(':', $key);
+                        \sort($labelValues);
+
+                        foreach ($meta->getQuantiles() as $quantile) {
+                            // Compute quantiles and set a summary sample in list for
+                            // each computed quantile.
+                            yield (new SummaryOutput($name, $labels, [], SummaryMeta::computeQuantiles($labelValues, $quantile), $quantile));
+                        }
+
+                        yield (new Counter($name . '_count', $labels, []))->increment(\count($labelValues));
+                        yield (new Gauge($name . '_sum', $labels, []))->set(\array_sum($labelValues));
+                    }
+                })();
+
+                return new SampleCollection(
+                    name: $name,
+                    help: $meta->getHelp(),
+                    type: 'summary',
+                    labelNames: $meta->getLabelNames(),
+                    samples: $samples,
+                );
+            })
+        ;
     }
 
     #[\Override]
@@ -194,12 +236,14 @@ class QueryBuilderStorage extends AbstractStorage
 
                     if (\array_key_exists($itemId, $histogramItems)) {
                         $histogramItems[$itemId][3] += 1;
+                        $histogramItems[$itemId][4] += $sampleValue->value;
                     } else {
                         $histogramItems[$itemId] = [
                             $namespacedName,
                             ExpressionFactory::value($labelValues, 'text[]'),
                             $bucket,
                             1,
+                            $sampleValue->value,
                         ];
                     }
                 }
@@ -259,20 +303,24 @@ class QueryBuilderStorage extends AbstractStorage
         }
 
         if ($histogramItems) {
+            $table = $this->getTable('histogram');
+
             $databaseSession->executeStatement(
                 <<<SQL
                 INSERT INTO ? (
-                    "name", "labels", "bucket", "count"
+                    "name", "labels", "bucket", "count", "value"
                 )
                 ?
                 ON CONFLICT ("name", "labels", "bucket")
                     DO UPDATE SET
-                        "count" = ?."count" + excluded."count"
+                        "count" = ?."count" + excluded."count",
+                        "value" = ?."value" + excluded."value"
                 SQL,
                 [
-                    $this->getTable('histogram'),
+                    $table,
                     ExpressionFactory::constantTable($histogramItems),
-                    $this->getTable('histogram'),
+                    $table,
+                    $table,
                 ]
             );
         }
@@ -370,6 +418,7 @@ class QueryBuilderStorage extends AbstractStorage
                     "labels" text[] DEFAULT NULL,
                     "bucket" text,
                     "count" int DEFAULT 0,
+                    "value" float DEFAULT 0,
                     PRIMARY KEY ("name", "labels", "bucket")
                 )
                 SQL,
