@@ -35,15 +35,25 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            ConsoleEvents::COMMAND => ['onConsoleCommand', 2048],
-            ConsoleEvents::ERROR => ['onConsoleException'],
-            ConsoleEvents::TERMINATE => ['onConsoleTerminate'],
+            ConsoleEvents::COMMAND => [
+                ['onConsoleCommand', 2048],
+            ],
+            ConsoleEvents::ERROR => [
+                ['onConsoleException'],
+            ],
+            ConsoleEvents::TERMINATE => [
+                ['onConsoleTerminate', -2048],
+            ],
             KernelEvents::REQUEST => [
                 ['onKernelRequestPre', 2048],
                 ['onKernelRequest'],
             ],
-            KernelEvents::EXCEPTION => ['onKernelException'],
-            KernelEvents::TERMINATE => ['onKernelTerminate'],
+            KernelEvents::EXCEPTION => [
+                ['onKernelException'],
+            ],
+            KernelEvents::TERMINATE => [
+                ['onKernelTerminate', -2048],
+            ],
         ];
     }
 
