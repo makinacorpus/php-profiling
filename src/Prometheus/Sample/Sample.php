@@ -9,6 +9,8 @@ namespace MakinaCorpus\Profiling\Prometheus\Sample;
  */
 abstract class Sample
 {
+    private ?string $uniqueId = null;
+
     /**
      * Exact time at which this sample was created.
      */
@@ -50,6 +52,14 @@ abstract class Sample
      * Compute a unique identifier for storage.
      */
     public function getUniqueId(): string
+    {
+        return $this->uniqueId ??= $this->computeUniqueId();
+    }
+
+    /**
+     * Compute unique identifier.
+     */
+    protected function computeUniqueId(): string
     {
         return \sha1($this->name . \implode('', $this->labelValues));
     }

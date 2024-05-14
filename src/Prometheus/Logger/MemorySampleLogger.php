@@ -19,6 +19,7 @@ use MakinaCorpus\Profiling\Prometheus\Storage\Storage;
  */
 class MemorySampleLogger implements SampleLogger
 {
+    private int $size = 0;
     /** @var Counter[] */
     private array $counters = [];
     /** @var Gauge[] */
@@ -50,6 +51,8 @@ class MemorySampleLogger implements SampleLogger
 
         $key = $meta->computeUniqueStorageKey($labelValues);
         $sample = $this->counters[$key] ?? ($this->counters[$key] = new Counter($name, $labelValues, []));
+        $this->size++;
+
         if ($value) {
             $sample->increment($value);
         } else {
@@ -76,6 +79,8 @@ class MemorySampleLogger implements SampleLogger
 
         $key = $meta->computeUniqueStorageKey($labelValues);
         $sample = $this->gauges[$key] ?? ($this->gauges[$key] = new Gauge($name, $labelValues, []));
+        $this->size++;
+
         if (null !== $value) {
             $sample->set($value);
         }
@@ -121,24 +126,12 @@ class MemorySampleLogger implements SampleLogger
         );
 
         $this->counters = $this->gauges = $this->summaries = $this->histograms = [];
+        $this->size = 0;
     }
 
     #[\Override]
     public function size(): int
     {
-        $ret = 0;
-        foreach ($this->counters as $sample) {
-            $ret += $sample->getSampleCount();
-        }
-        foreach ($this->gauges as $sample) {
-            $ret += $sample->getSampleCount();
-        }
-        foreach ($this->summaries as $sample) {
-            $ret += $sample->getSampleCount();
-        }
-        foreach ($this->histograms as $sample) {
-            $ret += $sample->getSampleCount();
-        }
-        return $ret;
+        return $this->size;
     }
 }

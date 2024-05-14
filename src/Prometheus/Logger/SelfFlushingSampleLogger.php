@@ -8,6 +8,10 @@ use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 
+/**
+ * @todo reverse flushIf before creating the new sample, which may be
+ *   altered after being saved ...
+ */
 class SelfFlushingSampleLogger implements SampleLogger
 {
     private int $ticks = 0;
