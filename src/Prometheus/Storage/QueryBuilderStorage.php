@@ -5,16 +5,13 @@ declare (strict_types=1);
 namespace MakinaCorpus\Profiling\Prometheus\Storage;
 
 use MakinaCorpus\Profiling\Prometheus\Error\StorageError;
-use MakinaCorpus\Profiling\Prometheus\Output\HistogramOutput;
 use MakinaCorpus\Profiling\Prometheus\Output\SampleCollection;
-use MakinaCorpus\Profiling\Prometheus\Output\SummaryOutput;
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
 use MakinaCorpus\Profiling\Prometheus\Sample\Histogram;
 use MakinaCorpus\Profiling\Prometheus\Sample\Sample;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 use MakinaCorpus\Profiling\Prometheus\Schema\Schema;
-use MakinaCorpus\Profiling\Prometheus\Schema\SummaryMeta;
 use MakinaCorpus\QueryBuilder\BridgeFactory;
 use MakinaCorpus\QueryBuilder\DatabaseSession;
 use MakinaCorpus\QueryBuilder\Error\Server\TableDoesNotExistError;
@@ -168,18 +165,8 @@ class QueryBuilderStorage extends AbstractStorage
 
                 // Then compute quantiles and build sample list.
                 $samples = (function () use ($name, $values, $meta) {
-                    foreach ($values as $key => $labelValues) {
-                        $labels = \explode(':', $key);
-                        \sort($labelValues);
-
-                        foreach ($meta->getQuantiles() as $quantile) {
-                            // Compute quantiles and set a summary sample in list for
-                            // each computed quantile.
-                            yield (new SummaryOutput($name, $labels, [], SummaryMeta::computeQuantiles($labelValues, $quantile), $quantile));
-                        }
-
-                        yield (new Counter($name . '_count', $labels, []))->increment(\count($labelValues));
-                        yield (new Gauge($name . '_sum', $labels, []))->set(\array_sum($labelValues));
+                    foreach ($values as $key => $input) {
+                        yield from $meta->createOutput($name, \explode(':', $key), $input);
                     }
                 })();
 

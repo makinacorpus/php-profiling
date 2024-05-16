@@ -5,13 +5,18 @@ declare (strict_types=1);
 namespace MakinaCorpus\Profiling\Prometheus\Storage;
 
 use MakinaCorpus\Profiling\Prometheus\Output\SampleCollection;
-use MakinaCorpus\Profiling\Prometheus\Output\SummaryOutput;
 use MakinaCorpus\Profiling\Prometheus\Sample\Counter;
 use MakinaCorpus\Profiling\Prometheus\Sample\Gauge;
+use MakinaCorpus\Profiling\Prometheus\Sample\Histogram;
+use MakinaCorpus\Profiling\Prometheus\Sample\HistogramItem;
 use MakinaCorpus\Profiling\Prometheus\Sample\Sample;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 use MakinaCorpus\Profiling\Prometheus\Sample\SummaryItem;
+use MakinaCorpus\Profiling\Prometheus\Schema\AbstractMeta;
 use MakinaCorpus\Profiling\Prometheus\Schema\Schema;
+use MakinaCorpus\Profiling\Prometheus\Schema\CounterMeta;
+use MakinaCorpus\Profiling\Prometheus\Schema\GaugeMeta;
+use MakinaCorpus\Profiling\Prometheus\Schema\HistogramMeta;
 use MakinaCorpus\Profiling\Prometheus\Schema\SummaryMeta;
 
 /**
@@ -36,6 +41,18 @@ use MakinaCorpus\Profiling\Prometheus\Schema\SummaryMeta;
  * Internally, we will always work with float values, no matter it's integer
  * or floats, it makes the Redis LUA code simpler, using hIncrByFloat always.
  *
+ * For histogram, we need to store one HASH for each label values couple
+ * because each one of those hashes will keep all bucket values.
+ *
+ *   "PREFIX:h:NAME" = HASH
+ *       "_seq" = current serial
+ *       "_JSON_ENCODED_LABELS" = serial
+ *       "_JSON_ENCODED_LABELS" = serial
+ *       ...
+ *
+ *   "PREFIX:i:h:NAME:SERIAL" = [bucket: count, bucket: count, _sum: value]
+ *   ...
+ *
  * For summary, schema is more complex because we need to store each value
  * independly with a lifetime. The main HASH will act as a key index for
  * fetching all individual value.
@@ -47,6 +64,7 @@ use MakinaCorpus\Profiling\Prometheus\Schema\SummaryMeta;
  *       ...
  *
  *   "PREFIX:i:s:NAME:SERIAL:RANDOM" = value, with expiry
+ *   ...
  *
  * @todo
  *   - explore performance improvement by using pipelines whenever possible
@@ -107,7 +125,55 @@ class RedisStorage extends AbstractStorage
             yield new SampleCollection(
                 name: $name,
                 help: $meta->getHelp(),
-                type: 'gauge',
+                type: 'counter',
+                labelNames: $meta->getLabelNames(),
+                samples: $items,
+            );
+        });
+
+        // Histogram.
+        yield from $this->scanKeys('h:', function (string $key) use ($schema, $redis, $prefixLen) {
+            $name = \substr($key, $prefixLen);
+            $meta = $schema->getHistogram($name, true);
+
+            $items = (function () use ($key, $redis, $name, $meta) {
+                $itemKeyPrefix = $this->getKeyName($meta, true);
+
+                foreach ((array) $redis->hGetAll($key) as $encodedLabels => $serial) {
+                    if ('_seq' === $encodedLabels) {
+                        continue;
+                    }
+
+                    $labelValues = \json_decode($encodedLabels) ?? [];
+                    $itemKey = $itemKeyPrefix . ':' . $serial;
+                    $sum = 0.0;
+
+                    $values = [];
+                    foreach ($redis->hGetAll($itemKey) as $bucket => $value) {
+                        if ('_sum' === $bucket) {
+                            $sum = (float) $value;
+                        } else {
+                            $values[$bucket] = [$value, 0.0];
+                        }
+                    }
+                    // Move total sum to +Inf value, in the end it won't change
+                    // how the _sum value is computed. This allows us to store a
+                    // single sum value for each (sample, labels) couple instead
+                    // of for each bucket. This simplifies greatly the schema.
+                    if (isset($values['+Inf'])) {
+                        $values['+Inf'][1] += $sum;
+                    } else {
+                        $values['+Inf'] = [0, $sum];
+                    }
+
+                    yield from $meta->createOutput($name, $labelValues, $values);
+                }
+            })();
+
+            yield new SampleCollection(
+                name: $name,
+                help: $meta->getHelp(),
+                type: 'histogram',
                 labelNames: $meta->getLabelNames(),
                 samples: $items,
             );
@@ -118,26 +184,19 @@ class RedisStorage extends AbstractStorage
             $name = \substr($key, $prefixLen);
             $meta = $schema->getSummary($name, true);
 
-            $items = (function () use ($key, $redis, $name, $meta) {;
+            $items = (function () use ($key, $redis, $name, $meta) {
+                $itemKeyPrefix = $this->getKeyName($meta, true);
+
                 foreach ((array) $redis->hGetAll($key) as $encodedLabels => $serial) {
                     if ('_seq' === $encodedLabels) {
                         continue;
                     }
 
-                    $labels = \json_decode($encodedLabels) ?? [];
-
-                    $itemKeyPrefix = 'c:s:' . $name . ':' . $serial;
+                    $labelValues = \json_decode($encodedLabels) ?? [];
+                    $itemKeyPrefix = $itemKeyPrefix . ':' . $serial;
                     $values = \iterator_to_array($this->scanKeys($itemKeyPrefix, fn ($key) => $redis->get($key)));
-                    \sort($values);
 
-                    foreach ($meta->getQuantiles() as $quantile) {
-                        // Compute quantiles and set a summary sample in list for
-                        // each computed quantile.
-                        yield (new SummaryOutput($name, $labels, [], SummaryMeta::computeQuantiles($values, $quantile), $quantile));
-                    }
-
-                    yield (new Counter($name . '_count', $labels, []))->increment(\count($values));
-                    yield (new Gauge($name . '_sum', $labels, []))->set(\array_sum($values));
+                    yield from $meta->createOutput($name, $labelValues, $values);
                 }
             })();
 
@@ -166,6 +225,21 @@ class RedisStorage extends AbstractStorage
                 $redis->hIncrBy($rootHashKey, $labelsKey, $sample->getValue());
             } else if ($sample instanceof Gauge) {
                 $redis->hSet($rootHashKey, $labelsKey, $sample->getValue());
+            } else if ($sample instanceof Histogram) {
+                $meta = $schema->getHistogram($sample->name);
+                $itemKeyPrefix = $this->getKeyName($sample, true);
+
+                if (!$serial = $redis->hGet($rootHashKey, $labelsKey)) {
+                    $serial = $redis->hIncrBy($rootHashKey, '_seq', 1);
+                    $redis->hSet($rootHashKey, $labelsKey, $serial);
+                }
+
+                foreach ($sample->getValues() as $value) {
+                    \assert($value instanceof HistogramItem);
+                    $itemKey = $itemKeyPrefix . ':' . $serial;
+                    $redis->hIncrBy($itemKey, (string) $meta->findBucketFor($value->value), 1);
+                    $redis->hIncrByFloat($itemKey, '_sum', $value->value);
+                }
             } else if ($sample instanceof Summary) {
                 $meta = $schema->getSummary($sample->name);
                 $itemKeyPrefix = $this->getKeyName($sample, true);
@@ -243,7 +317,9 @@ class RedisStorage extends AbstractStorage
     {
         $redis = $this->getRedisClient();
 
-        $match = ($this->keyPrefix ? $this->keyPrefix . ':' : '') . $match;
+        if ($this->keyPrefix && !\str_starts_with($match, $this->keyPrefix)) {
+            $match = $this->keyPrefix . ':' . $match;
+        }
 
         $cursor = null;
         do {
@@ -266,22 +342,42 @@ class RedisStorage extends AbstractStorage
     /**
      * Get key name that contains values to read.
      */
-    private function getKeyName(Sample $sample, bool $asItem = false): string
+    private function getKeyName(Sample|AbstractMeta $sample, bool $asItem = false): string
     {
+        $name = null;
         $infix = $asItem ? 'i:' : '';
 
         if ($sample instanceof Counter) {
             $infix .= 'c:';
+            $name = $sample->name;
         } else if ($sample instanceof Gauge) {
             $infix .= 'g:';
+            $name = $sample->name;
+        } else if ($sample instanceof Histogram) {
+            $infix .= 'h:';
+            $name = $sample->name;
         } else if ($sample instanceof Summary) {
             $infix .= 's:';
+            $name = $sample->name;
+        } else if ($sample instanceof CounterMeta) {
+            $infix .= 'c:';
+            $name = $sample->getName();
+        } else if ($sample instanceof GaugeMeta) {
+            $infix .= 'g:';
+            $name = $sample->getName();
+        } else if ($sample instanceof HistogramMeta) {
+            $infix .= 'h:';
+            $name = $sample->getName();
+        } else if ($sample instanceof SummaryMeta) {
+            $infix .= 's:';
+            $name = $sample->getName();
         } else {
             \trigger_error(\sprintf("Sample of type '%s' is not supported.", \get_class($sample)), E_USER_WARNING);
             $infix .= 'e:';
+            $name = $sample instanceof Sample ? $sample->name : $sample->getName();
         }
 
-        return $this->getKey($infix . $sample->name);
+        return $this->getKey($infix . $name);
     }
 
     /**
