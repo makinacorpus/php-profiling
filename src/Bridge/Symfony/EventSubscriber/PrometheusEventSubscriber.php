@@ -111,7 +111,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
                 if (null !== $this->started) {
                     $this->profiler->summary('http_request_duration_msec', $labels, $this->started->getElapsedTime());
                 }
-                $this->profiler->summary('http_memory_consuption', $labels, \memory_get_peak_usage(true));
+                $this->profiler->summary('http_memory_consumption', $labels, \memory_get_peak_usage(true));
                 $this->profiler->counter('http_response_total', $labels, 1);
                 $this->sysInfoCollector?->collect();
             }
@@ -156,7 +156,7 @@ class PrometheusEventSubscriber implements EventSubscriberInterface
                 if (null !== $this->started) {
                     $this->profiler->summary('console_duration_msec', $labels, $this->started->getElapsedTime());
                 }
-                $this->profiler->summary('console_memory_consuption', $labels, \memory_get_peak_usage(true));
+                $this->profiler->summary('console_memory_consumption', $labels, \memory_get_peak_usage(true));
                 $this->profiler->counter('console_status_total', $labels, 1);
                 $this->sysInfoCollector?->collect();
             }

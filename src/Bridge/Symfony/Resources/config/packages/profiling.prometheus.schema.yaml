@@ -22,7 +22,7 @@ profiling:
                 type: summary
                 help: request durations in milliseconds
                 labels: [action, method, status]
-            http_memory_consuption:
+            http_memory_consumption:
                 type: summary
                 help: request peak memory consumption in bytes
                 labels: [action, method, status]
@@ -54,7 +54,7 @@ profiling:
                 type: summary
                 help: console command durations in milliseconds
                 labels: [action, method, status]
-            coinsole_memory_consuption:
+            console_memory_consumption:
                 type: summary
                 help: console peak memory consumption in bytes
                 labels: [action, method, status]
