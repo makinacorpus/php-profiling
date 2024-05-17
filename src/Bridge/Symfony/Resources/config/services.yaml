@@ -12,11 +12,17 @@ services:
     # Profiler service: the instance you need to inject into your services.
     profiling.profiler:
         class: MakinaCorpus\Profiling\Profiler\DefaultProfiler
-        arguments: ["%env(bool:PROFILING_ENABLED)%", "%env(bool:PROFILING_PROMOTHEUS_ENABLED)%", "@profiling.prometheus.sample_logger"]
-        # Allow container to purge memory on terminate. This will also help
-        # when running long-running CLI commands, such as a message bus
-        # consumer.
-        tags: [{name: 'kernel.reset', method: 'exitContext'}]
+        arguments:
+            - "%env(bool:PROFILING_ENABLED)%"
+            - "%env(bool:PROFILING_PROMOTHEUS_ENABLED)%"
+            - "@profiling.prometheus.sample_logger"
+            - "@logger"
+        tags:
+            - {name: 'monolog.logger', channel: 'profiling'}
+            # Allow container to purge memory on terminate. This will also help
+            # when running long-running CLI commands, such as a message bus
+            # consumer.
+            - {name: 'kernel.reset', method: 'exitContext'}
     MakinaCorpus\Profiling\Profiler:
         alias: profiling.profiler
 
@@ -39,10 +45,20 @@ services:
     profiling.prometheus.sample_logger.self_flushing:
         class: MakinaCorpus\Profiling\Prometheus\Logger\SelfFlushingSampleLogger
         decorates: profiling.prometheus.sample_logger.default
-        arguments: ['@.inner', '%profiling.prometheus.sample_logger.max_size%']
+        arguments:
+            - '@.inner'
+            - '%profiling.prometheus.sample_logger.max_size%'
+            - "@logger"
+        tags:
+            - {name: 'monolog.logger', channel: 'profiling'}
     profiling.prometheus.sample_logger.default:
         class: MakinaCorpus\Profiling\Prometheus\Logger\MemorySampleLogger
-        arguments: ['@profiling.prometheus.schema', '@profiling.prometheus.storage']
+        arguments:
+            - '@profiling.prometheus.schema'
+            - '@profiling.prometheus.storage'
+            - "@logger"
+        tags:
+            - {name: 'monolog.logger', channel: 'profiling'}
     profiling.prometheus.sample_logger:
         alias: profiling.prometheus.sample_logger.default
 

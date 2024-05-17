@@ -11,6 +11,7 @@ use MakinaCorpus\Profiling\Prometheus\Sample\Sample;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 use MakinaCorpus\Profiling\Prometheus\Schema\Schema;
 use MakinaCorpus\Profiling\Prometheus\Storage\Storage;
+use Psr\Log\LoggerInterface;
 
 // @todo IDE bug, sorry.
 \class_exists(Sample::class);
@@ -33,6 +34,7 @@ class MemorySampleLogger implements SampleLogger
     public function __construct(
         private Schema $schema,
         private Storage $storage,
+        private ?LoggerInterface $logger = null,
     ) {}
 
     #[\Override]
@@ -45,8 +47,10 @@ class MemorySampleLogger implements SampleLogger
         }
 
         $labelValues = $meta->validateLabelValues($labelValues);
+
         if (null === $labelValues) {
-            // Errors must remain silent in production.
+            $this->logger?->error("{name} counter label value count mismatch the schema definition.", ['name' => $name]);
+
             return new Counter($name, [], []);
         }
 
@@ -74,7 +78,8 @@ class MemorySampleLogger implements SampleLogger
 
         $labelValues = $meta->validateLabelValues($labelValues);
         if (null === $labelValues) {
-            // Errors must remain silent in production.
+            $this->logger?->error("{name} gauge label value count mismatch the schema definition.", ['name' => $name]);
+
             return new Gauge($name, [], []);
         }
 
@@ -100,7 +105,8 @@ class MemorySampleLogger implements SampleLogger
 
         $labelValues = $meta->validateLabelValues($labelValues);
         if (null === $labelValues) {
-            // Errors must remain silent in production.
+            $this->logger?->error("{name} summary label value count mismatch the schema definition.", ['name' => $name]);
+
             return new Summary($name, [], []);
         }
 
@@ -126,7 +132,8 @@ class MemorySampleLogger implements SampleLogger
 
         $labelValues = $meta->validateLabelValues($labelValues);
         if (null === $labelValues) {
-            // Errors must remain silent in production.
+            $this->logger?->error("{name} histogram label value count mismatch the schema definition.", ['name' => $name]);
+
             return new Histogram($name, [], []);
         }
 

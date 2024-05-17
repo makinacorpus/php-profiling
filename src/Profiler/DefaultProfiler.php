@@ -13,6 +13,7 @@ use MakinaCorpus\Profiling\Prometheus\Sample\Histogram;
 use MakinaCorpus\Profiling\Prometheus\Sample\Summary;
 use MakinaCorpus\Profiling\RequestContext;
 use MakinaCorpus\Profiling\Timer;
+use Psr\Log\LoggerInterface;
 
 /**
  * Default implementation, stores information in memory and push it to
@@ -30,6 +31,7 @@ final class DefaultProfiler implements Profiler
         private bool $enabled = false,
         private bool $prometheusEnabled = false,
         private ?SampleLogger $sampleLogger = null,
+        private ?LoggerInterface $logger = null,
     ) {
         $this->nullSampleLogger = new NullSampleLogger();
     }
@@ -37,6 +39,16 @@ final class DefaultProfiler implements Profiler
     #[\Override]
     public function toggle(bool $enabled, bool $prometheusEnabled = false): void
     {
+        if ($enabled) {
+            if ($prometheusEnabled) {
+                $this->logger?->debug("Profiler enabled with prometheus.");
+            } else {
+                $this->logger?->debug("Profiler enabled without prometheus.");
+            }
+        } else {
+            $this->logger?->debug("Profiler disabled.");
+        }
+
         $this->enabled = $enabled;
     }
 
@@ -55,9 +67,13 @@ final class DefaultProfiler implements Profiler
     #[\Override]
     public function enterContext(RequestContext $context, bool $enablePrometheus = false): void
     {
+        $this->logger?->debug("Entering profiler context {name}.", ['name' => $context->toString()]);
+
         if ($this->context) {
+            $this->logger?->info("Profiler context was already set, flushing and recreating.");
             $this->flush();
         }
+
         $this->prometheusReallyEnabled = $enablePrometheus && $this->prometheusEnabled;
         $this->context = $context;
     }
@@ -65,12 +81,24 @@ final class DefaultProfiler implements Profiler
     #[\Override]
     public function getContext(): RequestContext
     {
-        return $this->context ??= RequestContext::null();
+        if (null === $this->context) {
+            $this->logger?->error("Profiler context was empty, using null context.");
+
+            return RequestContext::null();
+        }
+
+        return $this->context;
     }
 
     #[\Override]
     public function exitContext(): void
     {
+        if ($this->context) {
+            $this->logger?->debug("Exiting profiler context {name}.", ['name' => $this->context->toString()]);
+        } else {
+            $this->logger?->error("Exiting profiler context but no context was set.");
+        }
+
         try {
             $this->flush();
         } finally {

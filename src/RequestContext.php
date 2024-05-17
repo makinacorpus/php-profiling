@@ -61,4 +61,12 @@ class RequestContext
     {
         return \str_replace('\\', '.', \is_object($anything) ? \get_debug_type($anything) : $anything);
     }
+
+    /**
+     * Get string reprensentation for log and debug.
+     */
+    public function toString(): string
+    {
+        return \sprintf('%s[%s]@%s', $this->route, $this->method, $this->hostname);
+    }
 }
